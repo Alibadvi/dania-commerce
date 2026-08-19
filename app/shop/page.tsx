@@ -1,15 +1,9 @@
 import type { Metadata } from "next";
-import { ShopClient } from "@/components/shop-client";
+import { CatalogPage } from "@/components/catalog-page";
 
-export const metadata: Metadata = { title: "فروشگاه کفش کودک" };
+export const metadata: Metadata = { title: "فروشگاه" };
 
-export default function ShopPage() {
-  return <main className="page-main shell">
-    <header className="page-hero shop-hero">
-      <p className="eyebrow"><span /> کالکشن دانیا</p>
-      <h1>کفش برای <em>کشف کردن</em></h1>
-      <p>سبک، نرم و همراهِ مطمئن پاهای کوچک؛ برای هر روز و هر ماجراجویی.</p>
-    </header>
-    <ShopClient />
-  </main>;
+export default async function ShopPage({ searchParams }: { searchParams: Promise<{ category?: string }> }) {
+  const params = await searchParams;
+  return <CatalogPage initialCategory={params.category ?? "all"}/>;
 }

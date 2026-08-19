@@ -47,16 +47,9 @@ export default defineConfig(async () => {
     server: {
       host: "0.0.0.0",
       allowedHosts: ["terminal.local"],
-      watch: {
-        ignored: [
-          "**/.sites-runtime/**",
-          "**/commerce/node_modules/**",
-          "**/commerce/dist/**",
-        ],
-        ...(isCodexSeatbeltSandbox
-          ? { useFsEvents: false, usePolling: true }
-          : {}),
-      },
+      ...(isCodexSeatbeltSandbox
+        ? { watch: { useFsEvents: false, usePolling: true } }
+        : {}),
     },
     plugins: [
       vinext(),

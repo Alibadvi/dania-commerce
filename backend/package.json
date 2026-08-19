@@ -1,0 +1,34 @@
+{
+  "name": "@danya/vendure-server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "dev": "concurrently -k -n server,dashboard -c cyan,magenta \"tsx watch src/index.ts\" \"vite\"",
+    "dev:worker": "tsx watch src/index-worker.ts",
+    "build": "tsc && vite build",
+    "start": "node dist/index.js",
+    "start:worker": "node dist/index-worker.js",
+    "seed": "tsx src/seed.ts",
+    "migration:generate": "vendure migrate",
+    "migration:run": "vendure migrate run"
+  },
+  "dependencies": {
+    "@vendure/asset-server-plugin": "3.7.2",
+    "@vendure/core": "3.7.2",
+    "@vendure/dashboard": "3.7.2",
+    "@vendure/email-plugin": "3.7.2",
+    "@vendure/harden-plugin": "3.7.2",
+    "dotenv": "^17.2.2",
+    "pg": "^8.16.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.18.0",
+    "@vendure/cli": "3.7.2",
+    "concurrently": "^9.2.1",
+    "tsx": "^4.20.5",
+    "typescript": "~5.8.3",
+    "vite": "^6.1.0"
+  }
+}

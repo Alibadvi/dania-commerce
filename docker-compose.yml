@@ -1,99 +1,59 @@
-name: dania-commerce
-
 services:
   postgres:
-    image: postgres:16-alpine
+    image: postgres:17-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${DB_NAME:-dania}
-      POSTGRES_USER: ${DB_USERNAME:-dania}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
+      POSTGRES_DB: ${DB_NAME:-danya}
+      POSTGRES_USER: ${DB_USERNAME:-danya}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-danya-local-password}
+      TZ: UTC
+      PGTZ: UTC
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-dania} -d ${DB_NAME:-dania}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-danya} -d ${DB_NAME:-danya}"]
       interval: 5s
       timeout: 5s
       retries: 12
-    networks: [private]
 
-  commerce-server:
-    build: ./commerce
+  vendure:
+    build: ./backend
     restart: unless-stopped
-    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
     environment:
-      APP_ENV: ${APP_ENV:-development}
+      NODE_ENV: production
       PORT: 3000
+      APP_ORIGIN: ${APP_ORIGIN:-http://localhost:3001}
       DB_HOST: postgres
       DB_PORT: 5432
-      DB_NAME: ${DB_NAME:-dania}
-      DB_USERNAME: ${DB_USERNAME:-dania}
-      DB_PASSWORD: ${DB_PASSWORD}
-      STOREFRONT_URL: https://${DANIA_DOMAINS:-localhost}
-      COOKIE_SECRET: ${COOKIE_SECRET}
-      SUPERADMIN_USERNAME: ${SUPERADMIN_USERNAME:-owner}
-      SUPERADMIN_PASSWORD: ${SUPERADMIN_PASSWORD}
-      ZARINPAL_MERCHANT_ID: ${ZARINPAL_MERCHANT_ID}
-      ZARINPAL_SANDBOX: ${ZARINPAL_SANDBOX:-true}
-    depends_on:
-      postgres: { condition: service_healthy }
+      DB_NAME: ${DB_NAME:-danya}
+      DB_USERNAME: ${DB_USERNAME:-danya}
+      DB_PASSWORD: ${DB_PASSWORD:-danya-local-password}
+      DB_SYNCHRONIZE: ${DB_SYNCHRONIZE:-true}
+      COOKIE_SECRET: ${COOKIE_SECRET:-replace-this-before-production}
+      SUPERADMIN_USERNAME: ${SUPERADMIN_USERNAME:-superadmin}
+      SUPERADMIN_PASSWORD: ${SUPERADMIN_PASSWORD:-replace-this-before-production}
+      ASSET_UPLOAD_DIR: /app/static/assets
+      ASSET_URL_PREFIX: ${ASSET_URL_PREFIX:-http://localhost:3000/assets/}
+    ports:
+      - "3000:3000"
     volumes:
       - vendure_assets:/app/static/assets
-      - vendure_mail:/app/static/email
-    networks: [private]
-
-  commerce-worker:
-    build: ./commerce
-    restart: unless-stopped
-    command: ["node", "dist/index-worker.js"]
-    env_file: .env
-    environment:
-      APP_ENV: ${APP_ENV:-development}
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_NAME: ${DB_NAME:-dania}
-      DB_USERNAME: ${DB_USERNAME:-dania}
-      DB_PASSWORD: ${DB_PASSWORD}
-      COOKIE_SECRET: ${COOKIE_SECRET}
-      SUPERADMIN_USERNAME: ${SUPERADMIN_USERNAME:-owner}
-      SUPERADMIN_PASSWORD: ${SUPERADMIN_PASSWORD}
-      ZARINPAL_MERCHANT_ID: ${ZARINPAL_MERCHANT_ID}
-      ZARINPAL_SANDBOX: ${ZARINPAL_SANDBOX:-true}
-    depends_on:
-      postgres: { condition: service_healthy }
-    volumes:
-      - vendure_assets:/app/static/assets
-    networks: [private]
 
   storefront:
-    build:
-      context: .
-      dockerfile: Dockerfile.storefront
+    build: .
     restart: unless-stopped
+    depends_on:
+      - vendure
     environment:
-      VENDURE_SHOP_API_URL: http://commerce-server:3000/shop-api
-    depends_on: [commerce-server]
-    networks: [private]
-
-  caddy:
-    image: caddy:2-alpine
-    restart: unless-stopped
-    environment:
-      DANIA_DOMAINS: ${DANIA_DOMAINS:-localhost}
-    ports: ["80:80", "443:443", "443:443/udp"]
-    volumes:
-      - ./infra/Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy_data:/data
-      - caddy_config:/config
-    depends_on: [storefront, commerce-server]
-    networks: [private]
+      PORT: 3001
+      VENDURE_SHOP_API_URL: http://vendure:3000/shop-api
+      NEXT_PUBLIC_SITE_URL: ${APP_ORIGIN:-http://localhost:3001}
+    ports:
+      - "3001:3001"
 
 volumes:
   postgres_data:
   vendure_assets:
-  vendure_mail:
-  caddy_data:
-  caddy_config:
-
-networks:
-  private:

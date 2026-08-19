@@ -1,20 +1,22 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import type { Product } from "@/lib/catalog";
-import { formatToman } from "@/lib/money";
-import { useCart } from "./cart-provider";
-import { BagIcon, HeartIcon } from "./icons";
+import { formatPrice } from "@/lib/catalog";
+import { HeartIcon } from "@/components/icons";
+import { useShop } from "@/components/shop-shell";
 
-export function ProductCard({ product }: { product: Product; priority?: boolean }) {
-  const { addItem } = useCart();
+export function ProductCard({ product }: { product: Product }) {
+  const [liked, setLiked] = useState(false);
+  const { addToCart } = useShop();
   return <article className="product-card">
     <div className="product-media">
+      <Link href={`/product/${product.slug}`} className={`product-image ${product.imagePosition}`} aria-label={product.name} />
       {product.badge && <span className="product-badge">{product.badge}</span>}
-      <button className="wish-button" aria-label={`افزودن ${product.name} به علاقه‌مندی‌ها`}><HeartIcon /></button>
-      <Link href={`/product/${product.slug}`}><img src={product.image} alt={product.name} /></Link>
-      <button className="quick-add" onClick={() => addItem({ slug: product.slug, name: product.name, price: product.price, image: product.image, size: product.sizes[2] })}><BagIcon /> افزودن سریع</button>
+      <button className={`heart-button ${liked ? "is-liked" : ""}`} aria-label="افزودن به علاقه‌مندی‌ها" onClick={() => setLiked(!liked)}><HeartIcon /></button>
+      <button className="quick-add" onClick={() => addToCart(product.id)}>افزودن سریع</button>
     </div>
-    <div className="product-meta"><div><Link href={`/product/${product.slug}`}><h3>{product.name}</h3></Link><p>{product.subtitle}</p></div><div className="product-price"><strong>{formatToman(product.price)}</strong>{product.compareAt && <del>{formatToman(product.compareAt)}</del>}</div></div>
+    <div className="product-info"><div><Link href={`/product/${product.slug}`}><h3>{product.name}</h3></Link><p>{product.subtitle}</p></div><div className="product-price">{product.oldPrice && <del>{formatPrice(product.oldPrice)}</del>}<strong>{formatPrice(product.price)}</strong><small>تومان</small></div></div>
   </article>;
 }
