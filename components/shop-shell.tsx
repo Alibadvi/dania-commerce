@@ -116,9 +116,10 @@ export function ShopShell({ children, catalog }: { children: ReactNode; catalog:
     cartError,
     async addToCart(productVariantId, quantity = 1) {
       if (productVariantId.startsWith("demo-")) {
-        setCartError("کاتالوگ Vendure در دسترس نیست؛ ابتدا سرویس‌های محلی را اجرا کنید.");
+        const error = new Error("کاتالوگ زنده Vendure در دسترس نیست؛ سرویس فروشگاه را بررسی کنید.");
+        setCartError(error.message);
         setCartOpen(true);
-        return;
+        throw error;
       }
       await runCartAction({ action: "cart.add", productVariantId, quantity }, true);
     },

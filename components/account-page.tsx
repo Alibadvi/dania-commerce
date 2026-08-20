@@ -44,10 +44,11 @@ export function AccountPage() {
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const formElement = event.currentTarget;
     setBusy(true);
     setError(null);
     setNotice(null);
-    const form = new FormData(event.currentTarget);
+    const form = new FormData(formElement);
     try {
       if (mode === "login") {
         const payload = await accountRequest({
@@ -65,7 +66,7 @@ export function AccountPage() {
             password: form.get("password"),
           },
         });
-        event.currentTarget.reset();
+        formElement.reset();
         setMode("login");
         setNotice("حساب ساخته شد. حالا وارد شوید؛ در محیط اصلی ممکن است تأیید ایمیل لازم باشد.");
       }

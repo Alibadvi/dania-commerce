@@ -49,6 +49,18 @@ test("proxies a complete Vendure cart and guest checkout session", async (t) => 
     return { response, payload: await response.json() };
   }
 
+  const productResponse = await worker.fetch(
+    new Request("http://localhost/product/roshan-blue", {
+      headers: { accept: "text/html" },
+    }),
+    env,
+    ctx,
+  );
+  const productHtml = await productResponse.text();
+  assert.equal(productResponse.status, 200);
+  assert.match(productHtml, /1-26/);
+  assert.doesNotMatch(productHtml, /demo-roshan-blue-26/);
+
   const empty = await call("/api/commerce?resource=cart");
   assert.equal(empty.response.status, 200);
   assert.equal(empty.payload.order, null);
