@@ -8,6 +8,7 @@ import {
   LanguageCode,
   PaymentMethodService,
   ProductService,
+  ProductVariantService,
   RequestContextService,
   SearchService,
   ShippingMethodService,
@@ -18,6 +19,18 @@ import {
 } from "@vendure/core";
 import { importProductsFromCsv, populateCollections, populateInitialData } from "@vendure/core/cli/index.js";
 import { config } from "./vendure-config.js";
+
+const seedProductSlugs = [
+  "roshan-blue",
+  "naranj-sunset",
+  "sabz-park",
+  "yas-pink",
+  "abr-cream",
+  "darya-navy",
+  "shafagh-lilac",
+  "aftab-yellow",
+] as const;
+const seedVariantCount = 44;
 
 const initialData: InitialData = {
   defaultLanguage: LanguageCode.fa,
@@ -119,11 +132,27 @@ async function seed() {
     await ensureDevelopmentPayment(app, ctx);
 
     const productService = app.get(ProductService);
-    const firstProduct = await productService.findOneBySlug(ctx, "roshan-blue");
-    if (!firstProduct) {
+    const seedProducts = await Promise.all(seedProductSlugs.map((slug) => productService.findOneBySlug(ctx, slug)));
+    const seedVariants = (await app.get(ProductVariantService).findAll(ctx, { take: 1000 })).items.filter((variant) =>
+      variant.sku.startsWith("DAN-"),
+    );
+    const existingProductCount = seedProducts.filter(Boolean).length;
+    const catalogIsEmpty = existingProductCount === 0 && seedVariants.length === 0;
+    const catalogIsComplete = existingProductCount === seedProductSlugs.length && seedVariants.length === seedVariantCount;
+
+    if (!catalogIsEmpty && !catalogIsComplete) {
+      throw new Error(
+        `Catalog seed is incomplete (${existingProductCount}/${seedProductSlugs.length} products, ${seedVariants.length}/${seedVariantCount} variants). Reset the local Docker volumes before retrying; never delete production data this way.`,
+      );
+    }
+
+    if (catalogIsEmpty) {
       const csvPath = path.resolve(process.env.SEED_PRODUCTS_CSV ?? path.join(process.cwd(), "seed-data/products.csv"));
       const progress = await importProductsFromCsv(app, csvPath, LanguageCode.fa, channel);
       if (progress.errors?.length) throw new Error(`Catalog import failed: ${progress.errors.join("; ")}`);
+      if (progress.imported !== seedProductSlugs.length) {
+        throw new Error(`Catalog import created ${progress.imported}/${seedProductSlugs.length} expected products.`);
+      }
       await app.get(SearchService).reindex(ctx);
     }
     await populateCollections(app, initialData, channel);
