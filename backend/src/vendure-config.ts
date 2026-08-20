@@ -2,7 +2,9 @@ import "dotenv/config";
 import path from "node:path";
 import { AssetServerPlugin } from "@vendure/asset-server-plugin";
 import {
+  BigIntMoneyStrategy,
   DefaultJobQueuePlugin,
+  DefaultSchedulerPlugin,
   DefaultSearchPlugin,
   defaultShippingCalculator,
   defaultShippingEligibilityChecker,
@@ -108,6 +110,9 @@ export const config: VendureConfig = {
     },
     requireVerification: isProduction,
   },
+  entityOptions: {
+    moneyStrategy: new BigIntMoneyStrategy(),
+  },
   dbConnectionOptions: {
     type: "postgres",
     host: process.env.DB_HOST ?? "localhost",
@@ -136,6 +141,7 @@ export const config: VendureConfig = {
       assetUrlPrefix: process.env.ASSET_URL_PREFIX ?? `http://localhost:${port}/assets/`,
     }),
     DefaultJobQueuePlugin.init({ useDatabaseForBuffer: true }),
+    DefaultSchedulerPlugin.init(),
     DefaultSearchPlugin.init({ bufferUpdates: false, indexStockStatus: true }),
     DashboardPlugin.init({ route: "dashboard", appDir: path.join(rootDir, "dist/dashboard") }),
     emailPlugin,
