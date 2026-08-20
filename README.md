@@ -38,7 +38,7 @@ Compose سرویس‌ها را به ترتیب درست اجرا می‌کند:
 | Dev mailbox | `http://localhost:3000/mailbox` | ایمیل‌های تراکنشی محلی |
 | Shop GraphQL | `http://localhost:3000/shop-api` | API عمومی فروشگاه |
 | Admin GraphQL | `http://localhost:3000/admin-api` | فقط مدیریت؛ در production نباید عمومی شود |
-| PostgreSQL | `127.0.0.1:5432` | فقط روی loopback میزبان منتشر می‌شود |
+| PostgreSQL | شبکه داخلی Docker | عمداً روی Windows منتشر نمی‌شود؛ فقط سرویس‌های Compose به آن دسترسی دارند |
 
 ورود محلی Dashboard:
 
@@ -96,11 +96,7 @@ Browser هیچ GraphQL دلخواه یا Admin API را proxy نمی‌کند. g
 
 ## اجرای دستی برای توسعه
 
-Node.js **22.13 یا جدیدتر** و PostgreSQL لازم است. Node 20 پشتیبانی نمی‌شود. در Windows نسخه را با `node --version` بررسی کنید؛ سپس ساده‌ترین راه این است که فقط database را با Docker اجرا کنید:
-
-```bash
-docker compose up postgres
-```
+Node.js **22.13 یا جدیدتر** و PostgreSQL محلی لازم است. Node 20 پشتیبانی نمی‌شود. در Windows نسخه را با `node --version` بررسی کنید. در حالت پیش‌فرض Compose، PostgreSQL فقط داخل شبکه Docker در دسترس است تا با PostgreSQL نصب‌شده روی میزبان یا پورت‌های رزروشده Windows تداخل نکند. برای توسعه دستی، `DB_HOST` و `DB_PORT` فایل `backend/.env` را به PostgreSQL نصب‌شده روی دستگاه خودتان متصل کنید؛ برای اجرای یکپارچه از مسیر Docker بالا استفاده کنید.
 
 سپس در ترمینال‌های جدا:
 
