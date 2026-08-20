@@ -31,16 +31,18 @@ interface ExecutionContext {
 // const imageConfig: ImageConfig = { dangerouslyAllowSVG: true };
 
 const worker = {
-  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+  async fetch(request: Request, env: Env | undefined, ctx: ExecutionContext): Promise<Response> {
     // Vinext server modules use process.env like standard Next.js code. Cloudflare
     // supplies runtime variables as Worker bindings, so mirror string bindings
-    // before the request reaches the App Router.
-    for (const [name, value] of Object.entries(env)) {
+    // before the request reaches the App Router. `vinext start` runs the same
+    // Worker bundle in Node and intentionally supplies no Worker environment;
+    // in that mode the application settings already live in process.env.
+    for (const [name, value] of Object.entries(env ?? {})) {
       if (typeof value === "string") process.env[name] = value;
     }
     const url = new URL(request.url);
 
-    if (url.pathname === "/_vinext/image") {
+    if (url.pathname === "/_vinext/image" && env?.ASSETS && env.IMAGES) {
       const allowedWidths = [...DEFAULT_DEVICE_SIZES, ...DEFAULT_IMAGE_SIZES];
       return handleImageOptimization(request, {
         fetchAsset: (path) => env.ASSETS.fetch(new Request(new URL(path, request.url))),
