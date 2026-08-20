@@ -5,6 +5,11 @@ import handler from "vinext/server/app-router-entry";
 interface Env {
   ASSETS: Fetcher;
   DB: D1Database;
+  VENDURE_SHOP_API_URL?: string;
+  VENDURE_CHANNEL_TOKEN?: string;
+  NEXT_PUBLIC_SITE_URL?: string;
+  APP_ENV?: string;
+  ALLOW_DUMMY_PAYMENTS?: string;
   IMAGES: {
     input(stream: ReadableStream): {
       transform(options: Record<string, unknown>): {
@@ -27,6 +32,12 @@ interface ExecutionContext {
 
 const worker = {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+    // Vinext server modules use process.env like standard Next.js code. Cloudflare
+    // supplies runtime variables as Worker bindings, so mirror string bindings
+    // before the request reaches the App Router.
+    for (const [name, value] of Object.entries(env)) {
+      if (typeof value === "string") process.env[name] = value;
+    }
     const url = new URL(request.url);
 
     if (url.pathname === "/_vinext/image") {

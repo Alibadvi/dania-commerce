@@ -7,3 +7,5 @@ backend/dist
 .sites-runtime
 .wrangler
 *.log
+.env
+backend/.env

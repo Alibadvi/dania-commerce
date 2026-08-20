@@ -1,0 +1,47 @@
+services:
+  vendure-init:
+    environment:
+      APP_ENV: production
+      APP_ORIGINS: ${APP_ORIGINS:?Set APP_ORIGINS to the HTTPS storefront origin}
+      DB_SYNCHRONIZE: "false"
+      DB_PASSWORD: ${DB_PASSWORD:?Set a strong database password}
+      COOKIE_SECRET: ${COOKIE_SECRET:?Set a random secret of at least 32 characters}
+      SUPERADMIN_PASSWORD: ${SUPERADMIN_PASSWORD:?Set a strong admin password}
+      ALLOW_DUMMY_PAYMENTS: "false"
+      ASSET_URL_PREFIX: ${ASSET_URL_PREFIX:?Set the public HTTPS asset URL}
+      SMTP_HOST: ${SMTP_HOST:?Set the transactional email SMTP host}
+      SMTP_USER: ${SMTP_USER:?Set the transactional email SMTP user}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:?Set the transactional email SMTP password}
+      EMAIL_FROM: ${EMAIL_FROM:?Set the verified From address}
+  vendure:
+    environment:
+      APP_ENV: production
+      APP_ORIGINS: ${APP_ORIGINS:?Set APP_ORIGINS to the HTTPS storefront origin}
+      DB_SYNCHRONIZE: "false"
+      DB_PASSWORD: ${DB_PASSWORD:?Set a strong database password}
+      COOKIE_SECRET: ${COOKIE_SECRET:?Set a random secret of at least 32 characters}
+      SUPERADMIN_PASSWORD: ${SUPERADMIN_PASSWORD:?Set a strong admin password}
+      ALLOW_DUMMY_PAYMENTS: "false"
+      ASSET_URL_PREFIX: ${ASSET_URL_PREFIX:?Set the public HTTPS asset URL}
+      SMTP_HOST: ${SMTP_HOST:?Set the transactional email SMTP host}
+      SMTP_USER: ${SMTP_USER:?Set the transactional email SMTP user}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:?Set the transactional email SMTP password}
+      EMAIL_FROM: ${EMAIL_FROM:?Set the verified From address}
+  worker:
+    environment:
+      APP_ENV: production
+      DB_SYNCHRONIZE: "false"
+      DB_PASSWORD: ${DB_PASSWORD:?Set a strong database password}
+      COOKIE_SECRET: ${COOKIE_SECRET:?Set a random secret of at least 32 characters}
+      SUPERADMIN_PASSWORD: ${SUPERADMIN_PASSWORD:?Set a strong admin password}
+      ALLOW_DUMMY_PAYMENTS: "false"
+      SMTP_HOST: ${SMTP_HOST:?Set the transactional email SMTP host}
+      SMTP_USER: ${SMTP_USER:?Set the transactional email SMTP user}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:?Set the transactional email SMTP password}
+      EMAIL_FROM: ${EMAIL_FROM:?Set the verified From address}
+  storefront:
+    environment:
+      APP_ENV: production
+      ALLOW_DUMMY_PAYMENTS: "false"
+      VENDURE_SHOP_API_URL: ${VENDURE_SHOP_API_URL:?Set the internal HTTPS Shop API URL}
+      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:?Set the public HTTPS storefront URL}

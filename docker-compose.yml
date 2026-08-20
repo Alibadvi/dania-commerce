@@ -1,3 +1,23 @@
+x-vendure-environment: &vendure-environment
+  NODE_ENV: production
+  APP_ENV: local
+  PORT: 3000
+  APP_ORIGIN: http://localhost:3001
+  DB_HOST: postgres
+  DB_PORT: 5432
+  DB_NAME: ${DB_NAME:-danya}
+  DB_USERNAME: ${DB_USERNAME:-danya}
+  DB_PASSWORD: ${DB_PASSWORD:-danya-local-password}
+  DB_SYNCHRONIZE: ${DB_SYNCHRONIZE:-true}
+  COOKIE_SECRET: ${COOKIE_SECRET:-danya-local-cookie-secret-change-before-production}
+  SUPERADMIN_USERNAME: ${SUPERADMIN_USERNAME:-superadmin}
+  SUPERADMIN_PASSWORD: ${SUPERADMIN_PASSWORD:-danya-local-admin-password}
+  ALLOW_DUMMY_PAYMENTS: "true"
+  ASSET_UPLOAD_DIR: /app/static/assets
+  ASSET_URL_PREFIX: http://localhost:3000/assets/
+  IMPORT_ASSETS_DIR: /app/import-assets
+  SEED_PRODUCTS_CSV: /app/seed-data/products.csv
+
 services:
   postgres:
     image: postgres:17-alpine
@@ -10,47 +30,78 @@ services:
       PGTZ: UTC
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-danya} -d ${DB_NAME:-danya}"]
       interval: 5s
       timeout: 5s
       retries: 12
 
-  vendure:
-    build: ./backend
-    restart: unless-stopped
+  vendure-init:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: "no"
     depends_on:
       postgres:
         condition: service_healthy
-    environment:
-      NODE_ENV: production
-      PORT: 3000
-      APP_ORIGIN: ${APP_ORIGIN:-http://localhost:3001}
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_NAME: ${DB_NAME:-danya}
-      DB_USERNAME: ${DB_USERNAME:-danya}
-      DB_PASSWORD: ${DB_PASSWORD:-danya-local-password}
-      DB_SYNCHRONIZE: ${DB_SYNCHRONIZE:-true}
-      COOKIE_SECRET: ${COOKIE_SECRET:-replace-this-before-production}
-      SUPERADMIN_USERNAME: ${SUPERADMIN_USERNAME:-superadmin}
-      SUPERADMIN_PASSWORD: ${SUPERADMIN_PASSWORD:-replace-this-before-production}
-      ASSET_UPLOAD_DIR: /app/static/assets
-      ASSET_URL_PREFIX: ${ASSET_URL_PREFIX:-http://localhost:3000/assets/}
+    environment: *vendure-environment
+    command: ["node", "dist/seed.js"]
+    volumes:
+      - vendure_assets:/app/static/assets
+
+  vendure:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      vendure-init:
+        condition: service_completed_successfully
+    environment: *vendure-environment
     ports:
       - "3000:3000"
     volumes:
       - vendure_assets:/app/static/assets
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/shop-api',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({query:'{ activeChannel { id } }'})}).then(r=>{if(!r.ok)process.exit(1)})"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  worker:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      vendure-init:
+        condition: service_completed_successfully
+    environment:
+      <<: *vendure-environment
+      WORKER_HEALTH_PORT: 3020
+    command: ["node", "dist/index-worker.js"]
+    volumes:
+      - vendure_assets:/app/static/assets
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3020/health').then(r=>{if(!r.ok)process.exit(1)})"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
 
   storefront:
     build: .
     restart: unless-stopped
     depends_on:
-      - vendure
+      vendure:
+        condition: service_healthy
     environment:
       PORT: 3001
+      APP_ENV: local
       VENDURE_SHOP_API_URL: http://vendure:3000/shop-api
-      NEXT_PUBLIC_SITE_URL: ${APP_ORIGIN:-http://localhost:3001}
+      ALLOW_DUMMY_PAYMENTS: "true"
+      NEXT_PUBLIC_SITE_URL: http://localhost:3001
     ports:
       - "3001:3001"
 

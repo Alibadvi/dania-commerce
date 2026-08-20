@@ -15,7 +15,7 @@ export function ProductCard({ product }: { product: Product }) {
       <Link href={`/product/${product.slug}`} className={`product-image ${product.imagePosition}`} aria-label={product.name} />
       {product.badge && <span className="product-badge">{product.badge}</span>}
       <button className={`heart-button ${liked ? "is-liked" : ""}`} aria-label="افزودن به علاقه‌مندی‌ها" onClick={() => setLiked(!liked)}><HeartIcon /></button>
-      <button className="quick-add" onClick={() => addToCart(product.id)}>افزودن سریع</button>
+      <button className="quick-add" disabled={!product.variants[0]} onClick={() => void addToCart(product.variants[0]?.id).catch(() => undefined)}>افزودن سریع</button>
     </div>
     <div className="product-info"><div><Link href={`/product/${product.slug}`}><h3>{product.name}</h3></Link><p>{product.subtitle}</p></div><div className="product-price">{product.oldPrice && <del>{formatPrice(product.oldPrice)}</del>}<strong>{formatPrice(product.price)}</strong><small>تومان</small></div></div>
   </article>;

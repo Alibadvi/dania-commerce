@@ -1,141 +1,196 @@
 # Dania Commerce
 
-فروشگاه فارسی و راست‌به‌چپ کفش کودک دانیا با **Next.js 16، Vendure 3.7 و PostgreSQL 17**.
+فروشگاه فارسی و راست‌به‌چپ کفش کودک دانیا با **Next.js 16 / Vinext، Vendure 3.7 و PostgreSQL 17**.
 
-این مخزن یک شروع واقعی برای توسعه است، نه فقط یک صفحه‌ی نمایشی. رابط فروشگاه، کاتالوگ، صفحه محصول، سبد خرید، جستجو، فیلتر، انتخاب سایز و جریان آزمایشی تسویه‌حساب آماده است. سمت سرور شامل Vendure Shop/Admin GraphQL API، داشبورد مدیریت، worker، PostgreSQL و فضای فایل محصولات است.
+این نسخه یکپارچه است: کاتالوگ از Vendure خوانده می‌شود، هر سایز یک Product Variant واقعی است، سبد خرید همان Active Order در Vendure است و تسویه مهمان اطلاعات مشتری، نشانی، روش ارسال، وضعیت سفارش و پرداخت آزمایشی محلی را در backend ثبت می‌کند. Dashboard نیز همان داده‌ها و سفارش‌ها را مدیریت می‌کند.
 
-## معماری
+## اجرای همه سرویس‌ها با یک فرمان
 
-```text
-Browser
-  └─ Next.js storefront (:3001)
-       └─ Vendure Shop API (:3000/shop-api)
-            ├─ PostgreSQL (:5432)
-            ├─ Admin API (:3000/admin-api)
-            ├─ Dashboard (:3000/dashboard)
-            └─ Assets (:3000/assets)
-```
-
-## قابلیت‌های آماده
-
-- طراحی فارسی RTL و واکنش‌گرا برای موبایل و دسکتاپ
-- صفحه اصلی، فروشگاه، فیلتر و مرتب‌سازی، جزئیات محصول و درباره ما
-- سبد خرید پایدار در مرورگر و drawer تعاملی
-- انتخاب سایز، علاقه‌مندی، جستجو و checkout آزمایشی
-- تصویرهای اختصاصی تولیدشده برای برند دانیا
-- Vendure با زبان پیش‌فرض فارسی و Dashboard دارای ترجمه فارسی
-- PostgreSQL، worker، asset storage و Docker Compose
-- HardenPlugin برای محدودکردن GraphQL در محیط production
-- تنظیم جداگانه‌ی secrets، origin، database و asset URL با environment variables
-
-## اجرای سریع با Docker
-
-پیش‌نیاز: Docker Desktop یا Docker Engine به‌همراه Compose.
+پیش‌نیاز: Docker Desktop یا Docker Engine به‌همراه Docker Compose. در Windows، خود برنامه Docker Desktop باید باز باشد و پایین پنجره وضعیت **Engine running** را نشان دهد.
 
 ```bash
 git clone https://github.com/Alibadvi/dania-commerce.git
 cd dania-commerce
 cp .env.example .env
-cp backend/.env.example backend/.env
 docker compose up --build
 ```
 
-بعد از بالا آمدن سرویس‌ها، یک بار کانال پیش‌فرض را برای فارسی و ریال تنظیم کنید:
+در PowerShell، اگر فایل `.env` را قبلاً نساخته‌اید، به‌جای `cp` می‌توانید این فرمان را اجرا کنید:
 
-```bash
-docker compose exec vendure node dist/seed.js
+```powershell
+Copy-Item .env.example .env
+docker compose up --build
 ```
 
-سپس این آدرس‌ها در دسترس‌اند:
+Compose سرویس‌ها را به ترتیب درست اجرا می‌کند:
 
-- Storefront: `http://localhost:3001`
-- Vendure Dashboard: `http://localhost:3000/dashboard`
-- Shop GraphQL API: `http://localhost:3000/shop-api`
-- Admin GraphQL API: `http://localhost:3000/admin-api`
+1. PostgreSQL آماده می‌شود.
+2. `vendure-init` کانال فارسی/ریال، ایران، روش‌های ارسال، پرداخت محلی و ۸ محصول با تمام سایزها را به‌شکل idempotent ایجاد می‌کند.
+3. Vendure API و worker بالا می‌آیند.
+4. storefront پس از سالم‌شدن Shop API شروع می‌شود.
 
-قبل از اجرای عمومی، حتماً `COOKIE_SECRET` و `SUPERADMIN_PASSWORD` را عوض کنید. مقادیر پیش‌فرض فقط برای توسعه محلی هستند.
+هیچ seed دستی لازم نیست. در اولین اجرا، build و import تصاویر ممکن است چند دقیقه طول بکشد.
 
-## اجرای دستی بدون Docker
+| بخش | آدرس محلی | توضیح |
+|---|---|---|
+| Storefront | `http://localhost:3001` | فروشگاه و checkout |
+| Vendure Dashboard | `http://localhost:3000/dashboard` | CMS مدیریت محصول، موجودی، مشتری و سفارش |
+| Dev mailbox | `http://localhost:3000/mailbox` | ایمیل‌های تراکنشی محلی |
+| Shop GraphQL | `http://localhost:3000/shop-api` | API عمومی فروشگاه |
+| Admin GraphQL | `http://localhost:3000/admin-api` | فقط مدیریت؛ در production نباید عمومی شود |
+| PostgreSQL | `127.0.0.1:5432` | فقط روی loopback میزبان منتشر می‌شود |
 
-Node.js 22 و یک PostgreSQL در دسترس لازم است.
+ورود محلی Dashboard:
+
+```text
+username: superadmin
+password: danya-local-admin-password
+```
+
+این مشخصات فقط برای دستگاه توسعه هستند. در یک سیستم اشتراکی، آن‌ها را در `.env` تغییر دهید.
+
+## سناریوی تست کامل
+
+1. `http://localhost:3001/shop` را باز کنید.
+2. یک محصول و سایز را انتخاب و به سبد اضافه کنید.
+3. تعداد را در drawer تغییر دهید؛ صفحه را refresh کنید و پایداری نشست را ببینید.
+4. وارد checkout شوید، اطلاعات معتبر وارد کنید و یکی از روش‌های ارسال backend را انتخاب کنید.
+5. سفارش را ثبت کنید. `ALLOW_DUMMY_PAYMENTS=true` فقط در محیط محلی پرداخت آزمایشی را settle می‌کند و هیچ مبلغ واقعی دریافت نمی‌شود.
+6. در Dashboard بخش Orders، همان سفارش، مشتری، نشانی، خطوط و پرداخت را بررسی کنید.
+7. ایمیل سفارش محلی را در mailbox ببینید.
+
+کد تخفیف در صورت ساخت Promotion در Dashboard مستقیماً با mutation واقعی Vendure اعمال می‌شود؛ هیچ تخفیف نمایشی در frontend محاسبه نمی‌شود.
+
+## فرمان‌های روزمره Docker
 
 ```bash
-# storefront
+# وضعیت هر پنج سرویس
+docker compose ps
+
+# دنبال‌کردن لاگ‌های برنامه
+docker compose logs -f vendure worker storefront
+
+# توقف و نگه‌داشتن database و assetها
+docker compose down
+
+# build مجدد بعد از تغییر dependency یا Dockerfile
+docker compose up --build
+```
+
+برای پاک‌کردن کامل داده‌های محلی می‌توانید `docker compose down -v` بزنید. این فرمان تمام سفارش‌ها، محصولات importشده و assetهای volume را حذف می‌کند.
+
+## معماری اتصال
+
+```text
+Browser
+  └─ Next.js storefront (:3001)
+       └─ /api/commerce (same-origin allowlisted gateway)
+            └─ Vendure Shop API (:3000/shop-api)
+                 ├─ PostgreSQL 17
+                 ├─ Vendure worker
+                 ├─ Asset storage
+                 └─ Dashboard / Admin API
+```
+
+Browser هیچ GraphQL دلخواه یا Admin API را proxy نمی‌کند. gateway فقط عملیات مشخص کاتالوگ/سبد/کوپن/checkout را می‌پذیرد، ورودی‌ها را validate می‌کند، درخواست cross-site و payload بزرگ را رد می‌کند و session token Vendure را در cookie `HttpOnly` و `SameSite=Lax` نگه می‌دارد.
+
+## اجرای دستی برای توسعه
+
+Node.js **22.13 یا جدیدتر** و PostgreSQL لازم است. Node 20 پشتیبانی نمی‌شود. در Windows نسخه را با `node --version` بررسی کنید؛ سپس ساده‌ترین راه این است که فقط database را با Docker اجرا کنید:
+
+```bash
+docker compose up postgres
+```
+
+سپس در ترمینال‌های جدا:
+
+```bash
+# ترمینال ۱: backend + Dashboard
+cd backend
+npm ci
+cp .env.example .env
+npm run seed
+npm run dev
+```
+
+```bash
+# ترمینال ۲: worker
+cd backend
+npm run dev:worker
+```
+
+```bash
+# ترمینال ۳: storefront
 npm ci
 cp .env.example .env
 npm run dev
-
-# backend (در ترمینال جدا)
-cd backend
-npm install
-cp .env.example .env
-npm run dev
-# سپس در ترمینال سوم:
-npm run seed
 ```
 
-برای ساخت production:
+## کیفیت، تست و CI
 
 ```bash
-npm run build
+npm run lint
+npm run typecheck
+npm test
 npm run build:backend
+
+# همه بررسی‌ها پشت سر هم
+npm run check
 ```
 
-هر دو build در این نسخه بررسی و با موفقیت اجرا شده‌اند.
+تست‌ها شامل اعتبارسنجی checkout و یک contract test کامل هستند که Shop API را شبیه‌سازی می‌کند و مسیر `add item → session cookie → adjust → shipping quote → customer/address → payment` را از Worker واقعی اجرا می‌کند. GitHub Actions همین buildها و تست‌ها را روی push و pull request اجرا می‌کند و Dependabot dependencyهای frontend، backend و Actions را دنبال می‌کند.
 
-## تنظیم زبان و قیمت ایران
+## امنیت production
 
-- سند HTML با `lang="fa"` و `dir="rtl"` رندر می‌شود.
-- `defaultLanguageCode` در Vendure روی `fa` است.
-- متن، اعداد و layout فروشگاه برای فارسی طراحی شده‌اند.
-- قیمت رابط کاربری به **تومان** نمایش داده می‌شود. اگر کانال Vendure را با `IRR` تنظیم می‌کنید، قیمت backend را به ریال نگه دارید و هنگام نمایش بر ۱۰ تقسیم کنید. این تبدیل باید هنگام اتصال داده‌ی واقعی یک‌جا در لایه‌ی API انجام شود.
-- درگاه پرداخت ایرانی داخل این starter فعال نشده؛ باید plugin درگاه انتخابی شرکت اضافه شود. checkout فعلی عمداً پرداخت واقعی انجام نمی‌دهد.
+فایل `docker-compose.production.yml` guardrailهای production را اضافه می‌کند. اجرای production باید هر دو فایل را استفاده کند:
 
-## اتصال storefront به Vendure
-
-آدرس API از `VENDURE_SHOP_API_URL` خوانده می‌شود. query پایه در `lib/vendure.ts` آماده است. کاتالوگ نمایشی فعلی در `lib/catalog.ts` نگه داشته شده تا رابط بدون backend هم قابل مشاهده باشد.
-
-در مرحله بعد، داده‌ی صفحات را از توابع Vendure بگیرید و mutationهای زیر را متصل کنید:
-
-1. `addItemToOrder`
-2. `adjustOrderLine`
-3. `setOrderShippingAddress`
-4. `setOrderShippingMethod`
-5. mutation اختصاصی plugin پرداخت ایرانی
-
-## database و production
-
-`DB_SYNCHRONIZE=true` فقط برای اولین اجرای محلی مناسب است. برای سرور واقعی:
-
-1. آن را `false` کنید.
-2. migration تولید و بررسی کنید.
-3. `npm --prefix backend run migration:run` را در فرآیند deploy اجرا کنید.
-4. PostgreSQL را روی UTC نگه دارید.
-5. assetها را روی volume پایدار یا S3-compatible storage منتقل کنید.
-6. storefront و Vendure را پشت HTTPS و reverse proxy اجرا کنید.
-
-## ساختار مهم
-
-```text
-app/                    Next.js routes
-components/             رابط و تعاملات فروشگاه
-lib/catalog.ts          کاتالوگ نمایشی
-lib/vendure.ts          Shop API client پایه
-public/images/          تصاویر اختصاصی محصول
-backend/src/            Vendure server و worker
-backend/vite.config.mts Vendure Dashboard build
-docker-compose.yml      storefront + Vendure + PostgreSQL
+```bash
+docker compose -f docker-compose.yml -f docker-compose.production.yml up --build
 ```
 
-## محدودیت‌های فعلی
+قبل از آن باید این موارد انجام شده باشند:
 
-- محصولات رابط فعلاً demo هستند؛ sync کامل با Vendure مرحله‌ی بعد است.
-- حساب کاربری مشتری و OTP پیاده نشده‌اند.
-- سرویس پیامک، محاسبه هزینه پست و درگاه بانکی ایران نیاز به provider واقعی دارند.
-- دامنه‌های `.com` و `.ir` در کد hard-code نشده‌اند و بعداً هر دو می‌توانند به همین deployment متصل شوند.
+- `COOKIE_SECRET` تصادفی با حداقل ۳۲ کاراکتر و passwordهای قوی تنظیم شوند.
+- `APP_ORIGINS` و URLهای storefront/asset فقط HTTPS باشند.
+- `DB_SYNCHRONIZE=false` بماند و migration بررسی‌شده اجرا شود.
+- Admin API و Dashboard پشت VPN، allowlist یا احراز هویت reverse proxy قرار گیرند؛ فقط Shop API عمومی باشد.
+- rate limiting لبه شبکه (برای نمونه Cloudflare) علاوه بر محدودیت داخل gateway فعال شود.
+- SMTP و From address تأییدشده برای ایمیل تراکنشی تنظیم شوند.
+- assetها از volume محلی به object storage پایدار/S3-compatible منتقل شوند.
+- backup، مانیتورینگ خطا، log retention و restore drill تعریف شوند.
+
+Vendure در production بدون secretهای امن، SMTP، HTTPS origin یا با `DB_SYNCHRONIZE=true`/dummy payment عمداً start نمی‌شود. `HardenPlugin` نیز introspection/playground را می‌بندد و پیچیدگی query را محدود می‌کند.
+
+برای database production تازه، ابتدا migration را علیه PostgreSQL خالی با همان config تولید و review کنید:
+
+```bash
+cd backend
+npx vendure migrate -g initial-schema
+npx vendure migrate -r
+```
+
+## پرداخت واقعی
+
+پرداخت محلی کاملاً به order state machine متصل است، اما درگاه بانکی واقعی عمداً بدون provider و credential فعال نشده است. در production، dummy payment هم در seed و هم در storefront غیرفعال است؛ بنابراین برای دریافت وجه باید plugin درگاه انتخابی (مثلاً زرین‌پال/IDPay/درگاه مستقیم بانک)، callback امضاشده، idempotency و reconciliation همان provider اضافه شود. این مرز امنیتی جلوی ثبت پرداخت جعلی در production را می‌گیرد.
+
+## SEO فنی
+
+- metadata و canonical برای صفحات اصلی، فروشگاه، درباره و محصول
+- Open Graph و Twitter cards
+- `sitemap.xml` پویا از کاتالوگ Vendure
+- `robots.txt` با عدم index برای checkout و API
+- JSON-LD برای Organization، WebSite، Product/Offer و BreadcrumbList
+- HTML فارسی با `lang="fa"` و `dir="rtl"`
+- headerهای CSP، frame denial، nosniff، referrer و permissions policy
+- checkout با `noindex` و قیمت schema.org به IRR، در حالی که رابط کاربری تومان نمایش می‌دهد
+
+## واحد پول
+
+Vendure مقدارها را با `IRR` و به ریال نگه می‌دارد. تبدیل ریال به تومان فقط یک بار در لایه storefront انجام می‌شود. seed نیز قیمت محصول و ارسال را به ریال وارد می‌کند؛ بنابراین Dashboard، order totals و محاسبات backend منبع حقیقت هستند.
 
 ## منابع رسمی
 
-- [Vendure installation](https://docs.vendure.io/current/core/getting-started/installation)
-- [Vendure configuration](https://docs.vendure.io/current/core/developer-guide/configuration)
-- [Production security](https://docs.vendure.io/current/core/developer-guide/security)
+- [Vendure Storefront API](https://docs.vendure.io/current/core/storefront/connect-api)
+- [Vendure checkout flow](https://docs.vendure.io/current/core/storefront/checkout-flow)
+- [Vendure production security](https://docs.vendure.io/current/core/developer-guide/security)
+- [Next.js Metadata](https://nextjs.org/docs/app/getting-started/metadata-and-og-images)
