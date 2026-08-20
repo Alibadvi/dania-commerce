@@ -4,6 +4,7 @@ RUN apk add --no-cache bash coreutils
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .
+RUN find scripts -type f -name '*.sh' -exec sed -i 's/\r$//' {} +
 RUN npm run build
 
 FROM node:22-alpine AS runner
