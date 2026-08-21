@@ -28,7 +28,7 @@
     "@vendure/cli": "3.7.2",
     "concurrently": "^9.2.1",
     "tsx": "^4.20.5",
-    "typescript": "~5.8.3",
+    "typescript": "~7.0.2",
     "vite": "^6.1.0"
   }
 }
