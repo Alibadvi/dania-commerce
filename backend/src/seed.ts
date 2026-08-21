@@ -7,6 +7,7 @@ import {
   CurrencyCode,
   LanguageCode,
   PaymentMethodService,
+  ProductOptionGroupService,
   ProductService,
   ProductVariantService,
   RequestContextService,
@@ -111,6 +112,41 @@ async function ensureDevelopmentPayment(app: Awaited<ReturnType<typeof bootstrap
   else if (enabled) await service.create(ctx, input);
 }
 
+/**
+ * Vendure option groups are product-scoped in this catalog. Giving every group
+ * the bare display name "سایز" makes the global selector look like a list of
+ * duplicates. Keep the stable technical codes, but make the operator-facing
+ * names identify their product. This is idempotent and also upgrades existing
+ * local databases when vendure-init runs again.
+ */
+async function makeSizeGroupNamesClear(
+  app: Awaited<ReturnType<typeof bootstrapWorker>>["app"],
+  ctx: RequestContext,
+) {
+  const productService = app.get(ProductService);
+  const optionGroupService = app.get(ProductOptionGroupService);
+
+  for (const slug of seedProductSlugs) {
+    const product = await productService.findOneBySlug(ctx, slug);
+    if (!product) continue;
+
+    const groups = await optionGroupService.getOptionGroupsByProductId(ctx, product.id);
+    for (const group of groups) {
+      const values = group.options?.map((option) => option.name.trim()) ?? [];
+      const isSizeGroup =
+        group.name.trim() === "سایز" ||
+        (values.length > 0 && values.every((value) => /^\d+$/.test(value)));
+      const clearName = `سایز — ${product.name}`;
+      if (!isSizeGroup || group.name === clearName) continue;
+
+      await optionGroupService.update(ctx, {
+        id: group.id,
+        translations: [{ languageCode: LanguageCode.fa, name: clearName }],
+      });
+    }
+  }
+}
+
 async function seed() {
   const worker = await bootstrapWorker(config);
   const { app } = worker;
@@ -155,6 +191,7 @@ async function seed() {
       }
       await app.get(SearchService).reindex(ctx);
     }
+    await makeSizeGroupNamesClear(app, ctx);
     await populateCollections(app, initialData, channel);
     console.log("Danya seed complete: Persian/IRR channel, Iran zone, shipping, local payment and catalog are ready.");
   } finally {

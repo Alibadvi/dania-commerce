@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const csv = readFileSync(new URL("../backend/seed-data/products.csv", import.meta.url), "utf8");
+const seedSource = readFileSync(new URL("../backend/src/seed.ts", import.meta.url), "utf8");
 const rows = csv
   .trim()
   .split(/\r?\n/)
@@ -25,4 +26,9 @@ test("seed catalog uses product-scoped size groups with unique variants", () => 
   assert.ok(storedPrices.every((price) => Number.isSafeInteger(price) && price <= 100_000_000));
   assert.equal(csvPrices[0], 189_000);
   assert.ok(csvPrices.includes(235_000));
+});
+
+test("seed upgrades ambiguous size-group labels for dashboard operators", () => {
+  assert.match(seedSource, /سایز — \$\{product\.name\}/);
+  assert.match(seedSource, /makeSizeGroupNamesClear\(app, ctx\)/);
 });

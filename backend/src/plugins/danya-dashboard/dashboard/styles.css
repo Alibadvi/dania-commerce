@@ -1,0 +1,208 @@
+body {
+  font-family: "Vazirmatn Variable", Tahoma, Arial, sans-serif;
+  font-feature-settings: "ss01";
+  -webkit-font-smoothing: antialiased;
+}
+
+.danya-guide {
+  max-width: 1180px;
+  margin-inline: auto;
+}
+
+.danya-guide-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 28px;
+  border: 1px solid color-mix(in oklab, var(--primary) 22%, var(--border));
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 10% 0%, color-mix(in oklab, var(--primary) 18%, transparent), transparent 45%),
+    var(--card);
+}
+
+.danya-guide-hero span {
+  color: var(--primary);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.danya-guide-hero h2 {
+  margin-top: 6px;
+  font-size: clamp(1.35rem, 3vw, 2rem);
+  font-weight: 850;
+}
+
+.danya-guide-hero p {
+  margin-top: 8px;
+  color: var(--muted-foreground);
+}
+
+.danya-guide-hero > svg {
+  width: 64px;
+  height: 64px;
+  flex: 0 0 auto;
+  color: var(--primary);
+}
+
+.danya-action-grid,
+.danya-guide-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.danya-action-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.danya-guide-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.danya-action-card {
+  display: flex;
+  min-height: 160px;
+  flex-direction: column;
+  gap: 9px;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--card);
+  color: var(--card-foreground);
+  transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.danya-action-card:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in oklab, var(--primary) 45%, var(--border));
+  box-shadow: 0 14px 32px color-mix(in oklab, var(--foreground) 8%, transparent);
+}
+
+.danya-action-card svg {
+  width: 26px;
+  height: 26px;
+  color: var(--primary);
+}
+
+.danya-action-card strong {
+  margin-top: 4px;
+  font-size: 1rem;
+}
+
+.danya-action-card span,
+.danya-advanced p {
+  color: var(--muted-foreground);
+  font-size: 0.86rem;
+  line-height: 1.8;
+}
+
+.danya-steps,
+.danya-terms {
+  display: grid;
+  gap: 13px;
+}
+
+.danya-steps p,
+.danya-terms p {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+}
+
+.danya-steps p > b {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  background: color-mix(in oklab, var(--primary) 13%, transparent);
+  color: var(--primary);
+}
+
+.danya-steps p span,
+.danya-terms p span {
+  color: var(--muted-foreground);
+  line-height: 1.8;
+}
+
+.danya-terms p {
+  justify-content: space-between;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.danya-terms p:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.danya-terms p strong {
+  min-width: 118px;
+}
+
+.danya-advanced {
+  padding: 16px 18px;
+  border: 1px dashed var(--border);
+  border-radius: 14px;
+  background: color-mix(in oklab, var(--muted) 35%, transparent);
+}
+
+.danya-advanced summary {
+  cursor: pointer;
+  font-weight: 750;
+}
+
+.danya-advanced p {
+  margin-top: 8px;
+}
+
+.danya-advanced div {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.danya-advanced a {
+  color: var(--primary);
+  font-weight: 700;
+}
+
+@media (max-width: 900px) {
+  .danya-action-grid,
+  .danya-guide-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .danya-guide-hero {
+    padding: 21px;
+  }
+
+  .danya-guide-hero > svg {
+    width: 42px;
+    height: 42px;
+  }
+
+  .danya-action-grid,
+  .danya-guide-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .danya-action-card {
+    min-height: auto;
+  }
+
+  .danya-terms p {
+    flex-direction: column;
+    gap: 3px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .danya-action-card {
+    transition: none;
+  }
+}

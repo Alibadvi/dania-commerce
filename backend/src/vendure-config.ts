@@ -16,6 +16,7 @@ import {
 import { DashboardPlugin } from "@vendure/dashboard/plugin";
 import { defaultEmailHandlers, EmailPlugin, FileBasedTemplateLoader } from "@vendure/email-plugin";
 import { HardenPlugin } from "@vendure/harden-plugin";
+import { DanyaDashboardPlugin } from "./plugins/danya-dashboard/danya-dashboard.plugin.js";
 import { danyaStandardShippingCalculator } from "./shipping.js";
 
 const rootDir = process.cwd();
@@ -143,6 +144,7 @@ export const config: VendureConfig = {
     DefaultJobQueuePlugin.init({ useDatabaseForBuffer: true }),
     DefaultSchedulerPlugin.init(),
     DefaultSearchPlugin.init({ bufferUpdates: false, indexStockStatus: true }),
+    DanyaDashboardPlugin,
     DashboardPlugin.init({ route: "dashboard", appDir: path.join(rootDir, "dist/dashboard") }),
     emailPlugin,
     ...(isProduction ? [HardenPlugin.init({ maxQueryComplexity: 650, apiMode: "prod" })] : []),
