@@ -1,4 +1,3 @@
-import "@fontsource-variable/vazirmatn";
 import "./styles.css";
 
 import {
