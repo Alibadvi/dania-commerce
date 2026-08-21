@@ -155,7 +155,18 @@ const server = http.createServer((request, response) => {
       session.coupon = variables.couponCode;
       return send(response, { applyCouponCode: rawOrder(session) });
     }
-    if (query.includes("setCustomerForOrder")) return send(response, { setCustomerForOrder: { __typename: "Order", id: "mock-order-1" } });
+    if (query.includes("setCustomerForOrder")) {
+      if (session.customer) {
+        return send(response, {
+          setCustomerForOrder: {
+            __typename: "AlreadyLoggedInError",
+            errorCode: "ALREADY_LOGGED_IN_ERROR",
+            message: "Cannot set a Customer for the Order when already logged in",
+          },
+        });
+      }
+      return send(response, { setCustomerForOrder: { __typename: "Order", id: "mock-order-1" } });
+    }
     if (query.includes("setOrderShippingAddress")) return send(response, { setOrderShippingAddress: { __typename: "Order", id: "mock-order-1" } });
     if (query.includes("setOrderShippingMethod")) {
       session.shippingCode = variables.shippingMethodId[0];

@@ -405,16 +405,22 @@ export async function POST(request: NextRequest) {
         const currentData = await session.query<{ activeOrder: RawOrder | null }>(`query CurrentPaymentOrder { activeOrder { ${ORDER_FIELDS} } }`);
         return session.json<CheckoutResult>(await finalizePayment(session, requireOrder(currentData.activeOrder)));
       }
-      const { firstName, lastName } = splitFullName(input.fullName);
+      const customer = await activeCustomer(session);
 
-      const customerData = await session.query<{ setCustomerForOrder: RawOrder | ErrorResult }>(`
-        mutation SetCustomer($input: CreateCustomerInput!) {
-          setCustomerForOrder(input: $input) {
-            __typename ... on Order { id } ... on ErrorResult { errorCode message }
+      // Vendure automatically owns an authenticated customer's active order.
+      // setCustomerForOrder is only valid for guest orders and explicitly
+      // rejects attempts to replace the customer of a logged-in order.
+      if (!customer) {
+        const { firstName, lastName } = splitFullName(input.fullName);
+        const customerData = await session.query<{ setCustomerForOrder: RawOrder | ErrorResult }>(`
+          mutation SetCustomer($input: CreateCustomerInput!) {
+            setCustomerForOrder(input: $input) {
+              __typename ... on Order { id } ... on ErrorResult { errorCode message }
+            }
           }
-        }
-      `, { input: { firstName, lastName, emailAddress: input.emailAddress, phoneNumber: input.phoneNumber } });
-      requireOrder(customerData.setCustomerForOrder);
+        `, { input: { firstName, lastName, emailAddress: input.emailAddress, phoneNumber: input.phoneNumber } });
+        requireOrder(customerData.setCustomerForOrder);
+      }
 
       const addressData = await session.query<{ setOrderShippingAddress: RawOrder | ErrorResult }>(`
         mutation SetShippingAddress($input: CreateAddressInput!) {

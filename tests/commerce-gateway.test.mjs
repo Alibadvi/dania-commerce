@@ -23,7 +23,7 @@ async function startMockVendure() {
   return child;
 }
 
-test("proxies a complete Vendure cart and guest checkout session", async (t) => {
+test("proxies complete guest and authenticated Vendure checkout sessions", async (t) => {
   const mock = await startMockVendure();
   t.after(() => mock.kill("SIGTERM"));
   const workerUrl = new URL("../dist/server/index.js", import.meta.url);
@@ -84,6 +84,31 @@ test("proxies a complete Vendure cart and guest checkout session", async (t) => 
   assert.match(loggedIn.response.headers.get("set-cookie") ?? "", /HttpOnly/i);
   const account = await call("/api/commerce?resource=account", undefined, accountCookie);
   assert.equal(account.payload.customer.firstName, "سارا");
+
+  const accountCart = await call("/api/commerce", {
+    action: "cart.add",
+    productVariantId: "2-25",
+    quantity: 1,
+  }, accountCookie);
+  assert.equal(accountCart.response.status, 200);
+
+  const accountShipping = await call("/api/commerce?resource=shipping", undefined, accountCookie);
+  assert.equal(accountShipping.response.status, 200);
+  const accountCheckout = await call("/api/commerce", {
+    action: "checkout.place",
+    checkout: {
+      fullName: "سارا احمدی",
+      emailAddress: "sara@example.com",
+      phoneNumber: "09121111111",
+      province: "تهران",
+      city: "تهران",
+      streetLine1: "خیابان ولیعصر پلاک ۲",
+      postalCode: "1234567890",
+      shippingMethodId: "standard",
+    },
+  }, accountCookie);
+  assert.equal(accountCheckout.response.status, 200);
+  assert.equal(accountCheckout.payload.order.state, "PaymentSettled");
 
   const loggedOut = await call("/api/commerce", { action: "auth.logout" }, accountCookie);
   assert.equal(loggedOut.response.status, 200);
