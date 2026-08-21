@@ -1,4 +1,4 @@
-import type { CheckoutInput, LoginInput, RegisterInput } from "./commerce-types";
+import type { CheckoutInput, CustomerAddressInput, CustomerProfileInput, LoginInput, RegisterInput } from "./commerce-types";
 
 export class ValidationError extends Error {
   readonly code = "INVALID_CHECKOUT";
@@ -22,11 +22,16 @@ function validateEmail(value: unknown): string {
   return emailAddress;
 }
 
-function validatePassword(value: unknown): string {
+export function validatePassword(value: unknown): string {
   if (typeof value !== "string" || value.length < 8 || value.length > 72) {
     throw new ValidationError("رمز عبور باید بین ۸ تا ۷۲ کاراکتر باشد.");
   }
   return value;
+}
+
+function optionalClean(value: unknown, maxLength: number): string | undefined {
+  if (value == null || value === "") return undefined;
+  return clean(value, "مقدار", maxLength);
 }
 
 export function normalizeIranianDigits(value: string): string {
@@ -94,5 +99,47 @@ export function validateRegisterInput(value: unknown): RegisterInput {
     ...credentials,
     firstName: clean(input.firstName, "نام", 60),
     lastName: clean(input.lastName, "نام خانوادگی", 80),
+  };
+}
+
+export function validateCustomerProfileInput(value: unknown): CustomerProfileInput {
+  if (!value || typeof value !== "object" || Array.isArray(value)) throw new ValidationError("اطلاعات حساب نامعتبر است.");
+  const input = value as Record<string, unknown>;
+  const rawPhone = optionalClean(input.phoneNumber, 20);
+  const phoneNumber = rawPhone ? normalizeIranianDigits(rawPhone).replace(/[\s-]/g, "") : "";
+  if (phoneNumber && !IRAN_MOBILE_PATTERN.test(phoneNumber)) throw new ValidationError("شماره موبایل باید با ۰۹ شروع شود و ۱۱ رقم باشد.");
+  return {
+    firstName: clean(input.firstName, "نام", 60),
+    lastName: clean(input.lastName, "نام خانوادگی", 80),
+    phoneNumber,
+  };
+}
+
+export function validatePasswordChangeInput(value: unknown): { currentPassword: string; newPassword: string } {
+  if (!value || typeof value !== "object" || Array.isArray(value)) throw new ValidationError("اطلاعات رمز عبور نامعتبر است.");
+  const input = value as Record<string, unknown>;
+  const currentPassword = validatePassword(input.currentPassword);
+  const newPassword = validatePassword(input.newPassword);
+  if (currentPassword === newPassword) throw new ValidationError("رمز جدید باید با رمز فعلی متفاوت باشد.");
+  return { currentPassword, newPassword };
+}
+
+export function validateCustomerAddressInput(value: unknown, requireId = false): CustomerAddressInput {
+  if (!value || typeof value !== "object" || Array.isArray(value)) throw new ValidationError("اطلاعات آدرس نامعتبر است.");
+  const input = value as Record<string, unknown>;
+  const phoneNumber = normalizeIranianDigits(clean(input.phoneNumber, "شماره موبایل", 20)).replace(/[\s-]/g, "");
+  if (!IRAN_MOBILE_PATTERN.test(phoneNumber)) throw new ValidationError("شماره موبایل باید با ۰۹ شروع شود و ۱۱ رقم باشد.");
+  const postalCode = normalizeIranianDigits(clean(input.postalCode, "کد پستی", 20)).replace(/[\s-]/g, "");
+  if (!POSTAL_CODE_PATTERN.test(postalCode)) throw new ValidationError("کد پستی باید ۱۰ رقم باشد.");
+  return {
+    ...(requireId ? { id: validateEntityId(input.id, "آدرس") } : {}),
+    fullName: clean(input.fullName, "نام تحویل‌گیرنده", 100),
+    phoneNumber,
+    province: clean(input.province, "استان", 80),
+    city: clean(input.city, "شهر", 80),
+    streetLine1: clean(input.streetLine1, "آدرس", 300),
+    streetLine2: optionalClean(input.streetLine2, 150),
+    postalCode,
+    defaultShippingAddress: input.defaultShippingAddress === true,
   };
 }

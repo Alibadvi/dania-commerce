@@ -4,6 +4,7 @@ const port = Number(process.env.MOCK_VENDURE_PORT ?? 4010);
 const sessions = new Map();
 const customers = new Map();
 let sessionCounter = 0;
+let addressCounter = 0;
 
 const catalog = [
   ["1", "roshan-blue", "روشن آبی", "کتانی سبک روزمره", "پسرانه", "آبی", 18900000, [26, 27, 28, 29, 30, 31]],
@@ -106,7 +107,7 @@ const server = http.createServer((request, response) => {
     if (query.includes("DanyaProduct(")) return send(response, { product: catalog.find((item) => item.slug === variables.slug) ?? null });
     if (query.includes("Register(")) {
       if (customers.has(variables.input.emailAddress)) return send(response, { registerCustomerAccount: { __typename: "IdentifierChangeTokenInvalidError", errorCode: "EMAIL_ADDRESS_CONFLICT_ERROR", message: "این ایمیل قبلاً ثبت شده است." } });
-      customers.set(variables.input.emailAddress, { id: `customer-${customers.size + 1}`, firstName: variables.input.firstName, lastName: variables.input.lastName, emailAddress: variables.input.emailAddress, phoneNumber: null, password: variables.input.password });
+      customers.set(variables.input.emailAddress, { id: `customer-${customers.size + 1}`, firstName: variables.input.firstName, lastName: variables.input.lastName, emailAddress: variables.input.emailAddress, phoneNumber: null, password: variables.input.password, addresses: [], orders: [] });
       return send(response, { registerCustomerAccount: { __typename: "Success", success: true } });
     }
     if (query.includes("mutation Login")) {
@@ -133,6 +134,19 @@ const server = http.createServer((request, response) => {
       return send(response, { addItemToOrder: rawOrder(session) });
     }
     const session = getSession(request, response);
+    if (query.includes("CustomerDashboard")) {
+      if (!session?.customer) return send(response, { activeCustomer: null });
+      const customer = session.customer;
+      return send(response, { activeCustomer: {
+        id: customer.id,
+        firstName: customer.firstName,
+        lastName: customer.lastName,
+        emailAddress: customer.emailAddress,
+        phoneNumber: customer.phoneNumber,
+        addresses: customer.addresses,
+        orders: { items: customer.orders, totalItems: customer.orders.length },
+      } });
+    }
     if (query.includes("ActiveCustomer")) return send(response, { activeCustomer: session?.customer ? { id: session.customer.id, firstName: session.customer.firstName, lastName: session.customer.lastName, emailAddress: session.customer.emailAddress, phoneNumber: session.customer.phoneNumber } : null });
     if (query.includes("mutation Logout")) {
       if (session) sessions.delete(getToken(request));
@@ -140,6 +154,31 @@ const server = http.createServer((request, response) => {
     }
     if (query.includes("ActiveOrder") || query.includes("CurrentPaymentOrder")) return send(response, { activeOrder: session?.active ? rawOrder(session) : null });
     if (!session) return send(response, {}, 401);
+    if (query.includes("UpdateCustomerProfile")) {
+      Object.assign(session.customer, variables.input);
+      return send(response, { updateCustomer: { id: session.customer.id, firstName: session.customer.firstName, lastName: session.customer.lastName, emailAddress: session.customer.emailAddress, phoneNumber: session.customer.phoneNumber } });
+    }
+    if (query.includes("UpdateCustomerPassword")) {
+      if (session.customer.password !== variables.currentPassword) return send(response, { updateCustomerPassword: { __typename: "InvalidCredentialsError", errorCode: "INVALID_CREDENTIALS_ERROR", message: "Invalid credentials" } });
+      session.customer.password = variables.newPassword;
+      return send(response, { updateCustomerPassword: { __typename: "Success", success: true } });
+    }
+    if (query.includes("CreateCustomerAddress")) {
+      if (variables.input.defaultShippingAddress) for (const address of session.customer.addresses) address.defaultShippingAddress = false;
+      const address = { id: `address-${++addressCounter}`, ...variables.input };
+      session.customer.addresses.push(address);
+      return send(response, { createCustomerAddress: { id: address.id } });
+    }
+    if (query.includes("UpdateCustomerAddress")) {
+      if (variables.input.defaultShippingAddress) for (const address of session.customer.addresses) address.defaultShippingAddress = false;
+      const address = session.customer.addresses.find((item) => item.id === variables.input.id);
+      if (address) Object.assign(address, variables.input);
+      return send(response, { updateCustomerAddress: { id: variables.input.id } });
+    }
+    if (query.includes("DeleteCustomerAddress")) {
+      session.customer.addresses = session.customer.addresses.filter((item) => item.id !== variables.id);
+      return send(response, { deleteCustomerAddress: { success: true } });
+    }
     if (query.includes("adjustOrderLine")) {
       const line = session.lines.find((item) => item.id === variables.orderLineId);
       if (variables.quantity === 0) session.lines = session.lines.filter((item) => item.id !== variables.orderLineId);
@@ -179,7 +218,9 @@ const server = http.createServer((request, response) => {
     if (query.includes("addPaymentToOrder")) {
       session.state = "PaymentSettled";
       session.active = false;
-      return send(response, { addPaymentToOrder: rawOrder(session) });
+      const completedOrder = { ...rawOrder(session), orderPlacedAt: new Date().toISOString() };
+      if (session.customer && !session.customer.orders.some((order) => order.code === completedOrder.code)) session.customer.orders.unshift(completedOrder);
+      return send(response, { addPaymentToOrder: completedOrder });
     }
     return send(response, {}, 400);
   });

@@ -4,8 +4,11 @@ import {
   normalizeIranianDigits,
   splitFullName,
   validateCheckoutInput,
+  validateCustomerAddressInput,
+  validateCustomerProfileInput,
   validateEntityId,
   validateLoginInput,
+  validatePasswordChangeInput,
   validateQuantity,
   validateRegisterInput,
 } from "../lib/checkout-validation.ts";
@@ -64,4 +67,37 @@ test("validates account credentials without weakening password bounds", () => {
   });
   assert.throws(() => validateLoginInput({ emailAddress: "user@example.com", password: "short" }));
   assert.throws(() => validateRegisterInput({ firstName: "", lastName: "احمدی", emailAddress: "bad", password: "long-enough" }));
+});
+
+test("validates customer dashboard profile, address and password changes", () => {
+  assert.deepEqual(validateCustomerProfileInput({ firstName: " سارا ", lastName: " احمدی ", phoneNumber: "۰۹۱۲-۱۱۱-۱۱۱۱" }), {
+    firstName: "سارا",
+    lastName: "احمدی",
+    phoneNumber: "09121111111",
+  });
+  assert.deepEqual(validateCustomerAddressInput({
+    fullName: "سارا احمدی",
+    phoneNumber: "۰۹۱۲۱۱۱۱۱۱۱",
+    province: "تهران",
+    city: "تهران",
+    streetLine1: "خیابان ولیعصر پلاک ۲",
+    streetLine2: "واحد ۳",
+    postalCode: "۱۲۳۴۵۶۷۸۹۰",
+    defaultShippingAddress: true,
+  }), {
+    fullName: "سارا احمدی",
+    phoneNumber: "09121111111",
+    province: "تهران",
+    city: "تهران",
+    streetLine1: "خیابان ولیعصر پلاک ۲",
+    streetLine2: "واحد ۳",
+    postalCode: "1234567890",
+    defaultShippingAddress: true,
+  });
+  assert.deepEqual(validatePasswordChangeInput({ currentPassword: "correct-horse", newPassword: "new-correct-horse" }), {
+    currentPassword: "correct-horse",
+    newPassword: "new-correct-horse",
+  });
+  assert.throws(() => validatePasswordChangeInput({ currentPassword: "same-password", newPassword: "same-password" }));
+  assert.throws(() => validateCustomerAddressInput({ fullName: "سارا", phoneNumber: "123", province: "تهران", city: "تهران", streetLine1: "آدرس", postalCode: "123", defaultShippingAddress: false }));
 });

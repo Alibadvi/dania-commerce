@@ -84,6 +84,44 @@ test("proxies complete guest and authenticated Vendure checkout sessions", async
   assert.match(loggedIn.response.headers.get("set-cookie") ?? "", /HttpOnly/i);
   const account = await call("/api/commerce?resource=account", undefined, accountCookie);
   assert.equal(account.payload.customer.firstName, "سارا");
+  assert.equal(account.payload.dashboard.totalOrders, 0);
+
+  const profile = await call("/api/commerce", {
+    action: "account.profile.update",
+    customer: { firstName: "سارا", lastName: "احمدی‌نیا", phoneNumber: "09121111111" },
+  }, accountCookie);
+  assert.equal(profile.response.status, 200);
+  assert.equal(profile.payload.dashboard.customer.lastName, "احمدی‌نیا");
+
+  const createdAddress = await call("/api/commerce", {
+    action: "account.address.create",
+    address: {
+      fullName: "سارا احمدی‌نیا",
+      phoneNumber: "09121111111",
+      province: "تهران",
+      city: "تهران",
+      streetLine1: "خیابان ولیعصر پلاک ۲",
+      streetLine2: "واحد ۳",
+      postalCode: "1234567890",
+      defaultShippingAddress: true,
+    },
+  }, accountCookie);
+  assert.equal(createdAddress.response.status, 200);
+  assert.equal(createdAddress.payload.dashboard.addresses.length, 1);
+  assert.equal(createdAddress.payload.dashboard.addresses[0].defaultShippingAddress, true);
+  const addressId = createdAddress.payload.dashboard.addresses[0].id;
+
+  const wrongPassword = await call("/api/commerce", {
+    action: "account.password.update",
+    passwords: { currentPassword: "wrong-password", newPassword: "new-correct-horse" },
+  }, accountCookie);
+  assert.equal(wrongPassword.response.status, 401);
+  const changedPassword = await call("/api/commerce", {
+    action: "account.password.update",
+    passwords: { currentPassword: "correct-horse", newPassword: "new-correct-horse" },
+  }, accountCookie);
+  assert.equal(changedPassword.response.status, 200);
+  assert.equal(changedPassword.payload.changed, true);
 
   const accountCart = await call("/api/commerce", {
     action: "cart.add",
@@ -109,6 +147,29 @@ test("proxies complete guest and authenticated Vendure checkout sessions", async
   }, accountCookie);
   assert.equal(accountCheckout.response.status, 200);
   assert.equal(accountCheckout.payload.order.state, "PaymentSettled");
+
+  const accountAfterCheckout = await call("/api/commerce?resource=account", undefined, accountCookie);
+  assert.equal(accountAfterCheckout.payload.dashboard.totalOrders, 1);
+  assert.equal(accountAfterCheckout.payload.dashboard.orders[0].code, accountCheckout.payload.order.code);
+  assert.equal(accountAfterCheckout.payload.dashboard.orders[0].total, accountCheckout.payload.order.total);
+
+  const updatedAddress = await call("/api/commerce", {
+    action: "account.address.update",
+    address: {
+      id: addressId,
+      fullName: "سارا احمدی‌نیا",
+      phoneNumber: "09121111111",
+      province: "البرز",
+      city: "کرج",
+      streetLine1: "میدان آزادگان پلاک ۱",
+      streetLine2: "",
+      postalCode: "1234567890",
+      defaultShippingAddress: true,
+    },
+  }, accountCookie);
+  assert.equal(updatedAddress.payload.dashboard.addresses[0].city, "کرج");
+  const deletedAddress = await call("/api/commerce", { action: "account.address.delete", addressId }, accountCookie);
+  assert.equal(deletedAddress.payload.dashboard.addresses.length, 0);
 
   const loggedOut = await call("/api/commerce", { action: "auth.logout" }, accountCookie);
   assert.equal(loggedOut.response.status, 200);

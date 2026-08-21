@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { presentationForSlug } from "@/lib/catalog";
 import { rialToToman } from "@/lib/vendure";
-import { splitFullName, validateCheckoutInput, validateEntityId, validateLoginInput, validateQuantity, validateRegisterInput, ValidationError } from "@/lib/checkout-validation";
-import type { CartOrder, CheckoutResult, CommerceErrorPayload, CustomerAccount, ShippingMethod } from "@/lib/commerce-types";
+import { splitFullName, validateCheckoutInput, validateCustomerAddressInput, validateCustomerProfileInput, validateEntityId, validateLoginInput, validatePasswordChangeInput, validateQuantity, validateRegisterInput, ValidationError } from "@/lib/checkout-validation";
+import type { CartOrder, CheckoutResult, CommerceErrorPayload, CustomerAccount, CustomerAddress, CustomerDashboard, CustomerOrder, ShippingMethod } from "@/lib/commerce-types";
 
 const SESSION_COOKIE = "danya-commerce-session";
 const MAX_BODY_BYTES = 20_000;
@@ -46,6 +46,24 @@ type RawOrder = {
       product: { id: string; name: string; slug: string };
     };
   }>;
+};
+type RawCustomerAddress = CustomerAddress & { country?: { code: string; name: string } | null };
+type RawCustomerOrder = {
+  id: string;
+  code: string;
+  state: string;
+  orderPlacedAt?: string | null;
+  totalWithTax: number;
+  totalQuantity: number;
+  lines: Array<{
+    id: string;
+    quantity: number;
+    productVariant: { name: string; product: { name: string; slug: string } };
+  }>;
+};
+type RawCustomerDashboard = CustomerAccount & {
+  addresses?: RawCustomerAddress[] | null;
+  orders: { items: RawCustomerOrder[]; totalItems: number };
 };
 
 class CommerceError extends Error {
@@ -269,6 +287,59 @@ async function activeCustomer(session: VendureSession): Promise<CustomerAccount 
   return data.activeCustomer;
 }
 
+function mapCustomerOrder(order: RawCustomerOrder): CustomerOrder {
+  return {
+    id: order.id,
+    code: order.code,
+    state: order.state,
+    orderPlacedAt: order.orderPlacedAt,
+    total: rialToToman(order.totalWithTax),
+    totalQuantity: order.totalQuantity,
+    lines: order.lines.map((line) => ({
+      id: line.id,
+      quantity: line.quantity,
+      productName: line.productVariant.product.name,
+      productSlug: line.productVariant.product.slug,
+      variantName: line.productVariant.name,
+    })),
+  };
+}
+
+async function activeCustomerDashboard(session: VendureSession): Promise<CustomerDashboard | null> {
+  const data = await session.query<{ activeCustomer: RawCustomerDashboard | null }>(`
+    query CustomerDashboard {
+      activeCustomer {
+        id firstName lastName emailAddress phoneNumber
+        addresses {
+          id fullName streetLine1 streetLine2 city province postalCode phoneNumber
+          defaultShippingAddress defaultBillingAddress
+        }
+        orders(options: { take: 20, sort: { orderPlacedAt: DESC } }) {
+          totalItems
+          items {
+            id code state orderPlacedAt totalWithTax totalQuantity
+            lines { id quantity productVariant { name product { name slug } } }
+          }
+        }
+      }
+    }
+  `);
+  if (!data.activeCustomer) return null;
+  const { addresses, orders, ...customer } = data.activeCustomer;
+  return {
+    customer,
+    addresses: addresses ?? [],
+    orders: orders.items.map(mapCustomerOrder),
+    totalOrders: orders.totalItems,
+  };
+}
+
+async function requireCustomer(session: VendureSession): Promise<CustomerAccount> {
+  const customer = await activeCustomer(session);
+  if (!customer) throw new CommerceError("AUTHENTICATION_REQUIRED", "برای انجام این کار وارد حساب شوید.", 401);
+  return customer;
+}
+
 async function finalizePayment(session: VendureSession, preparedOrder: RawOrder): Promise<CheckoutResult> {
   const dummyAllowed = process.env.ALLOW_DUMMY_PAYMENTS === "true" && process.env.APP_ENV !== "production";
   if (!dummyAllowed) return { order: mapOrder(preparedOrder), paymentMode: "provider-required" };
@@ -289,7 +360,10 @@ export async function GET(request: NextRequest) {
     const resource = request.nextUrl.searchParams.get("resource") ?? "cart";
     if (resource === "cart") return session.json({ order: await activeOrder(session) });
     if (resource === "shipping") return session.json({ methods: await eligibleShipping(session) });
-    if (resource === "account") return session.json({ customer: await activeCustomer(session) });
+    if (resource === "account") {
+      const dashboard = await activeCustomerDashboard(session);
+      return session.json({ customer: dashboard?.customer ?? null, dashboard });
+    }
     throw new CommerceError("UNKNOWN_RESOURCE", "درخواست شناخته نشد.", 404);
   } catch (error) {
     return errorResponse(error);
@@ -302,7 +376,7 @@ export async function POST(request: NextRequest) {
     assertSameOrigin(request);
     const body = await parseBody(request);
     const action = typeof body.action === "string" ? body.action : "";
-    if (action.startsWith("auth.")) assertRateLimit(request, 10, "account");
+    if (action.startsWith("auth.") || action.startsWith("account.")) assertRateLimit(request, 10, "account");
     const session = new VendureSession(request);
 
     if (action === "auth.login") {
@@ -343,6 +417,73 @@ export async function POST(request: NextRequest) {
       await session.query<{ logout: { success: boolean } }>(`mutation Logout { logout { success } }`);
       session.clear();
       return session.json({ customer: null });
+    }
+
+    if (action === "account.profile.update") {
+      const input = validateCustomerProfileInput(body.customer);
+      await requireCustomer(session);
+      await session.query<{ updateCustomer: CustomerAccount }>(`
+        mutation UpdateCustomerProfile($input: UpdateCustomerInput!) {
+          updateCustomer(input: $input) { id firstName lastName emailAddress phoneNumber }
+        }
+      `, { input });
+      return session.json({ dashboard: await activeCustomerDashboard(session) });
+    }
+
+    if (action === "account.password.update") {
+      const input = validatePasswordChangeInput(body.passwords);
+      await requireCustomer(session);
+      const data = await session.query<{ updateCustomerPassword: { __typename: string; success?: boolean; errorCode?: string; message?: string } }>(`
+        mutation UpdateCustomerPassword($currentPassword: String!, $newPassword: String!) {
+          updateCustomerPassword(currentPassword: $currentPassword, newPassword: $newPassword) {
+            __typename
+            ... on Success { success }
+            ... on ErrorResult { errorCode message }
+          }
+        }
+      `, input);
+      if (data.updateCustomerPassword.__typename !== "Success") {
+        const invalid = data.updateCustomerPassword.__typename === "InvalidCredentialsError";
+        throw new CommerceError(
+          data.updateCustomerPassword.errorCode ?? "PASSWORD_UPDATE_FAILED",
+          invalid ? "رمز عبور فعلی درست نیست." : data.updateCustomerPassword.message ?? "تغییر رمز عبور انجام نشد.",
+          invalid ? 401 : 400,
+        );
+      }
+      return session.json({ changed: true });
+    }
+
+    if (action === "account.address.create") {
+      const input = validateCustomerAddressInput(body.address);
+      await requireCustomer(session);
+      await session.query<{ createCustomerAddress: RawCustomerAddress }>(`
+        mutation CreateCustomerAddress($input: CreateAddressInput!) {
+          createCustomerAddress(input: $input) { id }
+        }
+      `, { input: { ...input, countryCode: "IR", defaultBillingAddress: input.defaultShippingAddress } });
+      return session.json({ dashboard: await activeCustomerDashboard(session) });
+    }
+
+    if (action === "account.address.update") {
+      const input = validateCustomerAddressInput(body.address, true);
+      await requireCustomer(session);
+      await session.query<{ updateCustomerAddress: RawCustomerAddress }>(`
+        mutation UpdateCustomerAddress($input: UpdateAddressInput!) {
+          updateCustomerAddress(input: $input) { id }
+        }
+      `, { input: { ...input, countryCode: "IR", defaultBillingAddress: input.defaultShippingAddress } });
+      return session.json({ dashboard: await activeCustomerDashboard(session) });
+    }
+
+    if (action === "account.address.delete") {
+      const addressId = validateEntityId(body.addressId, "آدرس");
+      await requireCustomer(session);
+      await session.query<{ deleteCustomerAddress: { success: boolean } }>(`
+        mutation DeleteCustomerAddress($id: ID!) {
+          deleteCustomerAddress(id: $id) { success }
+        }
+      `, { id: addressId });
+      return session.json({ dashboard: await activeCustomerDashboard(session) });
     }
 
     if (action === "cart.add") {

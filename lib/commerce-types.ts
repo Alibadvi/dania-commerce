@@ -62,6 +62,60 @@ export type CustomerAccount = {
   phoneNumber?: string | null;
 };
 
+export type CustomerAddress = {
+  id: string;
+  fullName?: string | null;
+  streetLine1: string;
+  streetLine2?: string | null;
+  city?: string | null;
+  province?: string | null;
+  postalCode?: string | null;
+  phoneNumber?: string | null;
+  defaultShippingAddress?: boolean | null;
+  defaultBillingAddress?: boolean | null;
+};
+
+export type CustomerOrder = {
+  id: string;
+  code: string;
+  state: string;
+  orderPlacedAt?: string | null;
+  total: number;
+  totalQuantity: number;
+  lines: Array<{
+    id: string;
+    quantity: number;
+    productName: string;
+    productSlug: string;
+    variantName: string;
+  }>;
+};
+
+export type CustomerDashboard = {
+  customer: CustomerAccount;
+  addresses: CustomerAddress[];
+  orders: CustomerOrder[];
+  totalOrders: number;
+};
+
+export type CustomerProfileInput = {
+  firstName: string;
+  lastName: string;
+  phoneNumber?: string;
+};
+
+export type CustomerAddressInput = {
+  id?: string;
+  fullName: string;
+  phoneNumber: string;
+  province: string;
+  city: string;
+  streetLine1: string;
+  streetLine2?: string;
+  postalCode: string;
+  defaultShippingAddress: boolean;
+};
+
 export type LoginInput = {
   emailAddress: string;
   password: string;
