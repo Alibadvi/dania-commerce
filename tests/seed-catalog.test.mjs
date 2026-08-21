@@ -4,6 +4,11 @@ import test from "node:test";
 
 const csv = readFileSync(new URL("../backend/seed-data/products.csv", import.meta.url), "utf8");
 const seedSource = readFileSync(new URL("../backend/src/seed.ts", import.meta.url), "utf8");
+const dashboardConfigSource = readFileSync(new URL("../backend/vite.config.mts", import.meta.url), "utf8");
+const dashboardExtensionSource = readFileSync(
+  new URL("../backend/src/plugins/danya-dashboard/dashboard/index.tsx", import.meta.url),
+  "utf8",
+);
 const rows = csv
   .trim()
   .split(/\r?\n/)
@@ -31,4 +36,12 @@ test("seed catalog uses product-scoped size groups with unique variants", () => 
 test("seed upgrades ambiguous size-group labels for dashboard operators", () => {
   assert.match(seedSource, /سایز — \$\{product\.name\}/);
   assert.match(seedSource, /makeSizeGroupNamesClear\(app, ctx\)/);
+});
+
+test("Persian dashboard uses a valid language-region tag and repairs stale settings", () => {
+  assert.match(dashboardConfigSource, /defaultLocale: "IR"/);
+  assert.match(dashboardConfigSource, /availableLocales: \["IR"\]/);
+  assert.doesNotMatch(dashboardConfigSource, /defaultLocale: "fa-IR"/);
+  assert.match(dashboardExtensionSource, /setDisplayLocale\(persianRegion\)/);
+  assert.match(dashboardExtensionSource, /if \(!settingsArePersian\)/);
 });

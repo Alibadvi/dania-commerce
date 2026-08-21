@@ -18,6 +18,7 @@ import { BookOpenText, Boxes, PackagePlus, ReceiptText, Users } from "lucide-rea
 import { type ReactNode, useEffect } from "react";
 
 const dashboardBase = "/dashboard";
+const persianRegion = "IR";
 
 const labels: Record<string, string> = {
   insights: "نمای کلی",
@@ -77,14 +78,26 @@ function localizeNavigation(config: NavMenuConfig): NavMenuConfig {
 
 function PersianDashboard({ children }: Readonly<{ children: ReactNode }>) {
   const { settings, setDisplayLanguage, setDisplayLocale, setContentLanguage } = useUserSettings();
+  const settingsArePersian =
+    settings.displayLanguage === "fa" &&
+    settings.displayLocale === persianRegion &&
+    settings.contentLanguage === "fa";
 
   useEffect(() => {
     document.documentElement.lang = "fa";
     document.documentElement.dir = "rtl";
     if (settings.displayLanguage !== "fa") setDisplayLanguage("fa");
-    if (settings.displayLocale !== "fa-IR") setDisplayLocale("fa-IR");
+    // Vendure joins language and locale into a BCP 47 tag. The locale must be
+    // the region only (IR), otherwise it produces the invalid `fa-fa-IR` tag.
+    if (settings.displayLocale !== persianRegion) setDisplayLocale(persianRegion);
     if (settings.contentLanguage !== "fa") setContentLanguage("fa");
   }, [settings.displayLanguage, settings.displayLocale, settings.contentLanguage]);
+
+  // Do not render InnerApp with a stale `fa-IR` value saved by the previous
+  // release. The effect above repairs local and server-persisted settings first.
+  if (!settingsArePersian) {
+    return <div className="danya-dashboard-boot">در حال آماده‌سازی پنل مدیریت…</div>;
+  }
 
   return children;
 }

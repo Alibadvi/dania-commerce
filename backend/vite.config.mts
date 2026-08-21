@@ -11,9 +11,9 @@ export default defineConfig({
       vendureConfigPath: join(import.meta.dirname, "src/vendure-config.ts"),
       i18n: {
         defaultLanguage: LanguageCode.fa,
-        defaultLocale: "fa-IR",
+        defaultLocale: "IR",
         availableLanguages: [LanguageCode.fa],
-        availableLocales: ["fa-IR"],
+        availableLocales: ["IR"],
       },
     }),
   ],
