@@ -1742,38 +1742,87 @@ body { background: var(--paper); }
   background: linear-gradient(90deg,rgba(229,233,232,0) 38%,rgba(229,233,232,.08) 60%,rgba(229,233,232,.78) 100%);
 }
 .hero-color-wash::before,.hero-color-wash::after { content: none; }
+.hero-top-marquee {
+  position: absolute;
+  z-index: 6;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  border-bottom: 1px solid rgba(255,255,255,.68);
+  background: rgba(241,244,242,.48);
+  color: rgba(19,43,72,.66);
+  backdrop-filter: blur(12px) saturate(115%);
+  direction: ltr;
+}
+.hero-top-track {
+  width: max-content;
+  display: flex;
+  flex: 0 0 auto;
+  animation: hero-top-flow 32s linear infinite;
+}
+.hero-top-group { display: flex; align-items: center; flex: 0 0 auto; }
+.hero-top-group > span {
+  padding-left: 32px;
+  display: inline-flex;
+  align-items: center;
+  gap: 32px;
+  font: 650 8px/1 Arial,sans-serif;
+  letter-spacing: 1.7px;
+  white-space: nowrap;
+}
+.hero-top-group i { color: #ff777d; font-size: 8px; font-style: normal; }
+@keyframes hero-top-flow { to { transform: translate3d(-50%,0,0); } }
 .dania-hero-copy {
   top: 49%;
   right: clamp(32px,7.4vw,118px);
-  width: min(30vw,360px);
+  width: min(35vw,430px);
   transform: translateY(-50%);
 }
+.hero-overline {
+  display: block;
+  margin-bottom: 12px;
+  color: rgba(19,43,72,.62);
+  font-family: "Vazirmatn Variable","Vazirmatn",Tahoma,sans-serif;
+  font-size: 10px;
+  font-weight: 540;
+  letter-spacing: .15px;
+}
 .dania-hero h1 {
-  max-width: 360px;
-  margin: 0 0 23px;
+  max-width: 430px;
+  margin: 0 0 24px;
   color: #132b48;
   font-family: "Vazirmatn Variable","Vazirmatn",Tahoma,sans-serif;
-  font-size: clamp(38px,3.6vw,54px);
+  font-size: clamp(36px,3.2vw,50px);
   font-weight: 610;
   line-height: 1.25;
   letter-spacing: -.9px;
   text-shadow: none;
 }
 .dania-hero-actions { gap: 0; }
-.hero-shop-link {
-  padding: 0 0 7px;
+.hero-shop-button {
+  min-height: 48px;
+  padding: 10px 17px 10px 18px;
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  border-bottom: 1px solid rgba(19,43,72,.42);
-  color: #132b48;
+  justify-content: center;
+  gap: 12px;
+  border: 0;
+  border-radius: 13px;
+  background: #132b48;
+  color: #fff;
   font-family: "Vazirmatn Variable","Vazirmatn",Tahoma,sans-serif;
-  font-size: 12px;
-  font-weight: 580;
-  transition: gap .28s ease,border-color .28s ease;
+  font-size: 11px;
+  font-weight: 620;
+  transition: background-color .25s ease,transform .25s ease;
 }
-.hero-shop-link svg { width: 14px; height: 14px; }
-.hero-shop-link:hover,.hero-shop-link:focus-visible { gap: 15px; border-color: #132b48; }
+.hero-shop-button svg { width: 14px; height: 14px; transition: transform .25s ease; }
+.hero-shop-button:hover,.hero-shop-button:focus-visible { background: #1c3a60; transform: translateY(-1px); }
+.hero-shop-button:hover svg,.hero-shop-button:focus-visible svg { transform: translateX(-2px); }
+.hero-shop-button:focus-visible { outline: 2px solid #ff777d; outline-offset: 3px; }
 .hero-word-marquee {
   position: absolute;
   z-index: 6;
@@ -1812,8 +1861,8 @@ body { background: var(--paper); }
 @keyframes hero-word-flow { to { transform: translate3d(-50%,0,0); } }
 
 @media (max-width: 980px) {
-  .dania-hero-copy { right: 5vw; width: min(34vw,340px); }
-  .dania-hero h1 { font-size: clamp(36px,5vw,48px); }
+  .dania-hero-copy { right: 5vw; width: min(40vw,400px); }
+  .dania-hero h1 { font-size: clamp(33px,4.8vw,45px); }
 }
 
 @media (max-width: 700px) {
@@ -1823,15 +1872,15 @@ body { background: var(--paper); }
   }
   .dania-hero-photo {
     inset: 0 0 auto;
-    height: calc(100% - 220px);
+    height: calc(100% - 285px);
     background-size: cover;
-    background-position: 46% center;
+    background-position: 31% center;
     transform-origin: center top;
   }
   .hero-color-wash { display: none; }
   .dania-hero-copy {
     top: auto;
-    bottom: 86px;
+    bottom: 82px;
     right: 22px;
     left: 22px;
     width: auto;
@@ -1839,12 +1888,16 @@ body { background: var(--paper); }
   }
   .dania-hero h1 {
     max-width: none;
-    margin: 0 0 14px;
-    font-size: clamp(29px,8.4vw,34px);
-    line-height: 1.25;
+    margin: 0 0 17px;
+    font-size: clamp(27px,7.8vw,31px);
+    line-height: 1.35;
     letter-spacing: -.5px;
   }
-  .hero-shop-link { padding-bottom: 5px; font-size: 10px; }
+  .hero-overline { margin-bottom: 7px; font-size: 8px; }
+  .hero-shop-button { min-height: 43px; padding: 8px 14px 8px 15px; border-radius: 11px; font-size: 10px; }
+  .hero-top-marquee { height: 28px; background: rgba(241,244,242,.56); }
+  .hero-top-track { animation-duration: 27s; }
+  .hero-top-group > span { padding-left: 25px; gap: 25px; font-size: 7px; letter-spacing: 1.45px; }
   .hero-word-marquee { height: 56px; }
   .hero-word-track { animation-duration: 19s; }
   .hero-word-group > span {
@@ -1857,10 +1910,11 @@ body { background: var(--paper); }
 
 @media (max-width: 390px) {
   .dania-hero-copy { right: 18px; left: 18px; }
-  .dania-hero h1 { font-size: 29px; }
+  .dania-hero h1 { font-size: 27px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hero-shop-link { transition: none !important; }
+  .hero-shop-button,.hero-shop-button svg { transition: none !important; }
+  .hero-top-track { animation: none; }
   .hero-word-track { animation: none; }
 }

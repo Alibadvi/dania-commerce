@@ -6,6 +6,7 @@ import { ArrowLeftIcon } from "@/components/icons";
 import { useIntroReady } from "@/components/intro-context";
 
 const heroWords = ["PLAY", "DREAM", "RUN", "GROW", "EXPLORE", "SMILE"];
+const heroTopWords = ["DANIA KIDS", "LIGHT STEPS", "MADE FOR PLAY"];
 
 export function GlassHero() {
   const ready = useIntroReady();
@@ -25,14 +26,30 @@ export function GlassHero() {
       />
       <div className="hero-color-wash" aria-hidden="true" />
       <motion.div
+        className="hero-top-marquee"
+        initial={{ opacity: 0 }}
+        animate={ready ? { opacity: 1 } : { opacity: 0 }}
+        transition={{ ...reveal, delay: reduceMotion ? 0 : 0.18 }}
+        aria-hidden="true"
+      >
+        <div className="hero-top-track">
+          {[0, 1, 2, 3, 4, 5, 6, 7].map((group) => (
+            <div className="hero-top-group" key={group}>
+              {heroTopWords.map((word) => <span key={`${group}-${word}`}>{word}<i>•</i></span>)}
+            </div>
+          ))}
+        </div>
+      </motion.div>
+      <motion.div
         className="dania-hero-copy"
         initial={{ opacity: 0, y: 22 }}
         animate={ready ? { opacity: 1, y: 0 } : { opacity: 0, y: 22 }}
         transition={{ ...reveal, delay: reduceMotion ? 0 : 0.24 }}
       >
-        <h1 id="home-hero-title">برای بازی.</h1>
+        <span className="hero-overline">کفش بچه‌گانه دانیا</span>
+        <h1 id="home-hero-title">برای پاهایی که تازه دارن دنیا رو کشف می‌کنن.</h1>
         <div className="dania-hero-actions">
-          <Link href="/shop" className="hero-shop-link">
+          <Link href="/shop" className="hero-shop-button">
             <span>دیدن کفش‌ها</span>
             <ArrowLeftIcon />
           </Link>
