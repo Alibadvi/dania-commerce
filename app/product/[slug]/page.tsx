@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       title: product.name,
       description: product.description,
       url: `/product/${product.slug}`,
-      images: [{ url: product.imageUrl ?? "/images/danya-catalog-grid.png", width: 1254, height: 1254, alt: product.name }],
+      images: [{ url: product.imageUrl ?? "/images/danya-catalog-grid.webp", width: 1254, height: 1254, alt: product.name }],
     },
   };
 }
@@ -36,7 +36,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     "@type": "Product",
     name: product.name,
     description: product.description,
-    image: [product.imageUrl ?? absoluteUrl("/images/danya-catalog-grid.png")],
+    image: [product.imageUrl ?? absoluteUrl("/images/danya-catalog-grid.webp")],
     sku: product.slug,
     category: `کفش کودک ${product.category}`,
     brand: { "@type": "Brand", name: "دانیا" },

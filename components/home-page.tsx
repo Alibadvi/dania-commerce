@@ -5,10 +5,13 @@ import type { Product } from "@/lib/catalog";
 import { ArrowLeftIcon, RefreshIcon, RulerIcon, ShieldIcon, TruckIcon } from "@/components/icons";
 import { ProductCard } from "@/components/product-card";
 import { GlassHero } from "@/components/glass-hero";
+import { ShoeStoryGate } from "@/components/shoe-story-gate";
 
 export function HomePage({ products }: { products: Product[] }) {
   return <main>
-    <section className="hero-section"><div className="container"><GlassHero /></div></section>
+    <section className="hero-section"><GlassHero /></section>
+
+    <ShoeStoryGate />
 
     <section className="categories section">
       <div className="container"><div className="section-heading"><div><span className="eyebrow">دو مسیر، یک استاندارد</span><h2>برای حرکت آزاد</h2></div><Link href="/shop" className="arrow-link">دیدن همه <ArrowLeftIcon /></Link></div>

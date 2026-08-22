@@ -22,13 +22,18 @@ export const metadata: Metadata = {
     siteName: "دانیا",
     title: "دانیا | کفش برای قدم‌های کوچک",
     description: "کفش کودک سبک، بادوام و راحت برای بازی و رشد آزاد.",
-    images: [{ url: "/images/danya-hero-dark.jpg", width: 1200, height: 658, alt: "کتانی کودک دانیا روی صحنه طراحی" }],
+    images: [{ url: "/images/danya-hero-dark.webp", width: 1200, height: 658, alt: "کتانی کودک دانیا روی صحنه طراحی" }],
   },
-  twitter: { card: "summary_large_image", title: "دانیا | کفش برای قدم‌های کوچک", description: "کفش کودک سبک، بادوام و راحت.", images: ["/images/danya-hero-dark.jpg"] },
+  twitter: { card: "summary_large_image", title: "دانیا | کفش برای قدم‌های کوچک", description: "کفش کودک سبک، بادوام و راحت.", images: ["/images/danya-hero-dark.webp"] },
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",
   },
+};
+
+export const viewport = {
+  themeColor: "#fffaf0",
+  colorScheme: "light",
 };
 
 export default async function RootLayout({

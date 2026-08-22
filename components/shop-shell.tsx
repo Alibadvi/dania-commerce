@@ -3,10 +3,14 @@
 import Link from "next/link";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
+import { motion, useReducedMotion } from "framer-motion";
 import type { Product } from "@/lib/catalog";
 import { formatPrice } from "@/lib/catalog";
 import type { CartLine, CartOrder } from "@/lib/commerce-types";
 import { BagIcon, CloseIcon, InstagramIcon, MenuIcon, UserIcon } from "@/components/icons";
+import { DaniaWordmark } from "@/components/dania-wordmark";
+import { IntroProvider } from "@/components/intro-context";
+import { SiteLoader } from "@/components/site-loader";
 
 type ShopContextValue = {
   catalog: Product[];
@@ -54,6 +58,8 @@ export function ShopShell({ children, catalog }: { children: ReactNode; catalog:
   const [cartError, setCartError] = useState<string | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [introReady, setIntroReady] = useState(false);
+  const reduceMotion = useReducedMotion();
 
   const runCartAction = useCallback(async (body?: Record<string, unknown>, openCart = false) => {
     setCartBusy(true);
@@ -140,10 +146,17 @@ export function ShopShell({ children, catalog }: { children: ReactNode; catalog:
 
   return (
     <ShopContext.Provider value={value}>
-      <header className="site-header">
+      <IntroProvider ready={introReady}>
+      <SiteLoader onComplete={() => setIntroReady(true)} />
+      <motion.header
+        className="site-header"
+        initial={{ y: reduceMotion ? 0 : "-110%", opacity: reduceMotion ? 1 : 0 }}
+        animate={introReady ? { y: 0, opacity: 1 } : { y: reduceMotion ? 0 : "-110%", opacity: reduceMotion ? 1 : 0 }}
+        transition={{ duration: reduceMotion ? 0.18 : 0.82, delay: reduceMotion ? 0 : 0.08, ease: [0.16, 1, 0.3, 1] }}
+      >
         <div className="container header-inner">
           <button className="icon-button mobile-menu-button" aria-label="باز کردن منو" onClick={() => setMenuOpen(true)}><MenuIcon /></button>
-          <Link href="/" className="brand" aria-label="دانیا، صفحه اصلی"><span className="brand-dot">d</span><span className="brand-word">DANIA</span><small>کفش کودک</small></Link>
+          <Link href="/" className="brand" aria-label="دانیا، صفحه اصلی"><DaniaWordmark /><small>کفش کودک</small></Link>
           <nav className="main-nav" aria-label="منوی اصلی">
             <Link href="/shop?category=girl">دخترانه</Link><Link href="/shop?category=boy">پسرانه</Link><Link href="/about">درباره ما</Link><Link href="/contact">تماس با ما</Link>
           </nav>
@@ -152,7 +165,7 @@ export function ShopShell({ children, catalog }: { children: ReactNode; catalog:
             <button className="cart-nav-button bag-button" aria-label="سبد خرید" onClick={() => setCartOpen(true)}><BagIcon /><span>سبد خرید</span>{value.cartCount > 0 && <b className="bag-count">{value.cartCount.toLocaleString("fa-IR")}</b>}</button>
           </div>
         </div>
-      </header>
+      </motion.header>
 
       {children}
       <SiteFooter />
@@ -184,13 +197,14 @@ export function ShopShell({ children, catalog }: { children: ReactNode; catalog:
 
       <div className={`mobile-menu ${menuOpen ? "is-open" : ""}`} aria-hidden={!menuOpen} onMouseDown={(event) => { if (event.target === event.currentTarget) setMenuOpen(false); }}>
         <div className="mobile-menu-panel">
-          <div className="mobile-menu-top"><Link href="/" className="brand" onClick={() => setMenuOpen(false)}><span className="brand-dot">d</span><span className="brand-word">DANIA</span></Link><button className="mobile-close" onClick={() => setMenuOpen(false)} aria-label="بستن منو"><CloseIcon /></button></div>
+          <div className="mobile-menu-top"><Link href="/" className="brand" onClick={() => setMenuOpen(false)}><DaniaWordmark /></Link><button className="mobile-close" onClick={() => setMenuOpen(false)} aria-label="بستن منو"><CloseIcon /></button></div>
           <span className="mobile-menu-kicker">انتخاب مسیر</span>
           <nav onClickCapture={() => setMenuOpen(false)}><Link href="/shop?category=girl"><small>۰۱</small><span>دخترانه</span></Link><Link href="/shop?category=boy"><small>۰۲</small><span>پسرانه</span></Link><Link href="/about"><small>۰۳</small><span>درباره ما</span></Link><Link href="/contact"><small>۰۴</small><span>تماس با ما</span></Link></nav>
           <div className="mobile-menu-actions"><Link href="/account" onClick={() => setMenuOpen(false)}><UserIcon /><span><strong>ورود / عضویت</strong><small>حساب و سفارش‌های شما</small></span></Link><button onClick={() => { setMenuOpen(false); setCartOpen(true); }}><BagIcon /><span><strong>سبد خرید</strong><small>{value.cartCount ? `${value.cartCount.toLocaleString("fa-IR")} محصول` : "هنوز خالی است"}</small></span></button></div>
           <p className="mobile-menu-foot">DANIA — برای حرکت آزاد</p>
         </div>
       </div>
+      </IntroProvider>
     </ShopContext.Provider>
   );
 }
@@ -200,5 +214,5 @@ function EmptyCart({ close }: { close: () => void }) {
 }
 
 function SiteFooter() {
-  return <footer className="site-footer"><div className="container footer-grid"><div className="footer-brand"><Link href="/" className="brand light"><span className="brand-dot">d</span><span className="brand-word">DANIA</span></Link><p>برای قدم‌های کوچکی که<br/>دنیا را کشف می‌کنند.</p><a className="social-link" href="https://instagram.com/dania.kids" rel="noreferrer" target="_blank" aria-label="اینستاگرام دانیا"><InstagramIcon /> @dania.kids</a></div><div><h3>فروشگاه</h3><Link href="/shop?category=girl">دخترانه</Link><Link href="/shop?category=boy">پسرانه</Link></div><div><h3>دانیا</h3><Link href="/about">درباره ما</Link><Link href="/contact">تماس با ما</Link><Link href="/account">ورود / عضویت</Link></div><div className="footer-note"><h3>انتخاب مطمئن</h3><p>ارسال سریع، تعویض آسان و پشتیبانی برای انتخاب سایز درست.</p><Link className="footer-cta" href="/shop">دیدن کفش‌ها</Link></div></div><div className="container footer-bottom"><span>© ۱۴۰۵ دانیا — همه حقوق محفوظ است.</span><span>طراحی‌شده برای حرکت آزاد</span></div></footer>;
+  return <footer className="site-footer"><div className="container footer-grid"><div className="footer-brand"><Link href="/" className="brand light"><DaniaWordmark /></Link><p>برای قدم‌های کوچکی که<br/>دنیا را کشف می‌کنند.</p><a className="social-link" href="https://instagram.com/dania.kids" rel="noreferrer" target="_blank" aria-label="اینستاگرام دانیا"><InstagramIcon /> @dania.kids</a></div><div><h3>فروشگاه</h3><Link href="/shop?category=girl">دخترانه</Link><Link href="/shop?category=boy">پسرانه</Link></div><div><h3>دانیا</h3><Link href="/about">درباره ما</Link><Link href="/contact">تماس با ما</Link><Link href="/account">ورود / عضویت</Link></div><div className="footer-note"><h3>انتخاب مطمئن</h3><p>ارسال سریع، تعویض آسان و پشتیبانی برای انتخاب سایز درست.</p><Link className="footer-cta" href="/shop">دیدن کفش‌ها</Link></div></div><div className="container footer-bottom"><span>© ۱۴۰۵ دانیا — همه حقوق محفوظ است.</span><span>طراحی‌شده برای حرکت آزاد</span></div></footer>;
 }

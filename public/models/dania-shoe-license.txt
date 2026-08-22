@@ -1,0 +1,11 @@
+Materials Variants Shoe
+Copyright 2021 Shopify
+
+Licensed under the Creative Commons Attribution 4.0 International License:
+https://creativecommons.org/licenses/by/4.0/
+
+Source:
+https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/MaterialsVariantsShoe
+
+This copy was resized, texture-compressed to WebP, and mesh-compressed with
+gltf-transform for responsive web delivery. The underlying model is unchanged.
