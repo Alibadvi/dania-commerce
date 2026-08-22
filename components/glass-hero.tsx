@@ -18,9 +18,9 @@ export function GlassHero() {
       <motion.div
         className="dania-hero-photo"
         role="img"
-        aria-label="کودکی شاد در حال بازی با کفش‌های رنگی دانیا"
-        initial={{ opacity: reduceMotion ? 1 : 0, y: reduceMotion ? 0 : "-5%", scale: reduceMotion ? 1 : 1.035 }}
-        animate={ready ? { opacity: 1, y: 0, scale: 1 } : { opacity: reduceMotion ? 1 : 0, y: reduceMotion ? 0 : "-5%", scale: reduceMotion ? 1 : 1.035 }}
+        aria-label="کودکان شاد در حال بازی با کفش‌های رنگی دانیا"
+        initial={{ opacity: reduceMotion ? 1 : 0, y: reduceMotion ? 0 : "-2%", scale: reduceMotion ? 1 : 1.02 }}
+        animate={ready ? { opacity: 1, y: 0, scale: 1 } : { opacity: reduceMotion ? 1 : 0, y: reduceMotion ? 0 : "-2%", scale: reduceMotion ? 1 : 1.02 }}
         transition={photoReveal}
       />
       <div className="hero-color-wash" aria-hidden="true" />
@@ -30,20 +30,11 @@ export function GlassHero() {
         animate={ready ? { opacity: 1, y: 0 } : { opacity: 0, y: 22 }}
         transition={{ ...reveal, delay: reduceMotion ? 0 : 0.24 }}
       >
-        <h1 id="home-hero-title">بذار راحت<br/><em>بازی کنه.</em></h1>
-        <p>کفش‌های دانیا سبک، نرم و مناسب پاهای در حال رشدند.</p>
+        <h1 id="home-hero-title">برای بازی.</h1>
         <div className="dania-hero-actions">
-          <Link href="/shop" className="hero-shop-button" aria-label="دیدن مدل‌ها">
-            <span className="hero-button-label-window" aria-hidden="true">
-              <span className="hero-button-label-track">
-                {[0, 1].map((group) => (
-                  <span className="hero-button-label-group" key={group}>
-                    <span>دیدن مدل‌ها</span><b>•</b><span>دیدن مدل‌ها</span><b>•</b>
-                  </span>
-                ))}
-              </span>
-            </span>
-            <i><ArrowLeftIcon /></i>
+          <Link href="/shop" className="hero-shop-link">
+            <span>دیدن کفش‌ها</span>
+            <ArrowLeftIcon />
           </Link>
         </div>
       </motion.div>
