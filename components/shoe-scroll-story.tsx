@@ -1,24 +1,62 @@
 "use client";
 
+import type { Application, SPEObject } from "@splinetool/runtime";
 import gsap from "gsap";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { useEffect, useRef, useState } from "react";
-import * as THREE from "three";
-import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
-import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.js";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowLeftIcon } from "@/components/icons";
 
 gsap.registerPlugin(ScrollTrigger);
 
+const SPLINE_SCENE = "https://prod.spline.design/8SpvxCVlElOUYaVL/scene.splinecode";
+const SPLINE_SHOE_NAME = "AirMax";
+const SPLINE_BRAND_OBJECTS = /^(?:Text(?: .*)?|NIkeLogo|NIKE|nike|AIR|MAX|Texty|AirMaxStripey|gum outsole|air-cushioned|In the bustling.*|Designed with precision.*)$/i;
+const SplineScene = dynamic(() => import("@splinetool/react-spline"), { ssr: false });
+
+type TransformSnapshot = {
+  rotation: { x: number; y: number; z: number };
+  scale: { x: number; y: number; z: number };
+};
+
 export function ShoeScrollStory() {
   const sectionRef = useRef<HTMLElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const shoeRef = useRef<THREE.Group | null>(null);
+  const splineAppRef = useRef<Application | null>(null);
+  const shoeRef = useRef<SPEObject | null>(null);
+  const baseTransformRef = useRef<TransformSnapshot | null>(null);
   const spinRef = useRef({ value: 0 });
   const [shouldLoad, setShouldLoad] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
+
+  const handleSplineLoad = useCallback((app: Application) => {
+    splineAppRef.current = app;
+    app.setBackgroundColor("rgba(0, 0, 0, 0)");
+
+    for (const object of app.getAllObjects()) {
+      if (SPLINE_BRAND_OBJECTS.test(object.name.trim())) object.hide();
+    }
+
+    const shoe = app.findObjectByName(SPLINE_SHOE_NAME);
+    if (!shoe) {
+      setFailed(true);
+      return;
+    }
+
+    const viewportScale = window.matchMedia("(max-width: 700px)").matches ? 0.78 : 0.92;
+    shoeRef.current = shoe;
+    baseTransformRef.current = {
+      rotation: { x: shoe.rotation.x, y: shoe.rotation.y, z: shoe.rotation.z },
+      scale: { x: shoe.scale.x, y: shoe.scale.y, z: shoe.scale.z },
+    };
+    shoe.scale.x *= viewportScale;
+    shoe.scale.y *= viewportScale;
+    shoe.scale.z *= viewportScale;
+    setFailed(false);
+    setLoaded(true);
+    window.setTimeout(() => ScrollTrigger.refresh(), 80);
+  }, []);
 
   useEffect(() => {
     const section = sectionRef.current;
@@ -28,9 +66,34 @@ export function ShoeScrollStory() {
         setShouldLoad(true);
         observer.disconnect();
       }
-    }, { rootMargin: "450px" });
+    }, { rootMargin: "1600px 0px" });
     observer.observe(section);
     return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!shouldLoad) return;
+    const timeout = window.setTimeout(() => {
+      if (!shoeRef.current) setFailed(true);
+    }, 18000);
+    return () => window.clearTimeout(timeout);
+  }, [shouldLoad]);
+
+  useEffect(() => {
+    let frame = 0;
+    const renderScrollTransform = () => {
+      const shoe = shoeRef.current;
+      const base = baseTransformRef.current;
+      if (shoe && base) {
+        const spin = spinRef.current.value;
+        shoe.rotation.y = base.rotation.y + spin;
+        shoe.rotation.x = base.rotation.x + Math.sin(spin * 0.62) * 0.075;
+        shoe.rotation.z = base.rotation.z + Math.sin(spin * 0.38) * 0.035;
+      }
+      frame = window.requestAnimationFrame(renderScrollTransform);
+    };
+    frame = window.requestAnimationFrame(renderScrollTransform);
+    return () => window.cancelAnimationFrame(frame);
   }, []);
 
   useEffect(() => {
@@ -39,6 +102,7 @@ export function ShoeScrollStory() {
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const context = gsap.context(() => {
       if (reduceMotion) return;
+
       const entrance = gsap.timeline({
         scrollTrigger: {
           trigger: section,
@@ -64,123 +128,25 @@ export function ShoeScrollStory() {
         },
       });
       timeline
-        .to(spinRef.current, { value: Math.PI * 3.15, ease: "none", duration: 3.25 }, 0)
-        .to(".shoe-fallback", { rotationY: 480, rotationZ: 7, ease: "none", duration: 3.25 }, 0)
+        .to(spinRef.current, { value: Math.PI * 3.15, ease: "none", duration: 3.5 }, 0)
+        .to(".shoe-fallback", { rotationY: 480, rotationZ: 7, ease: "none", duration: 3.5 }, 0)
         .to(".shoe-story-entry", { opacity: 0, yPercent: -12, duration: 0.52 }, 0.1)
-        .to(".shoe-bg-iris", { opacity: 1, duration: 0.9 }, 0.25)
-        .fromTo(".shoe-story-copy", { y: 42, opacity: 0 }, { y: 0, opacity: 1, duration: 0.58 }, 0.42)
-        .to(".shoe-bg-night", { opacity: 1, duration: 1.05 }, 1.7)
-        .to(".shoe-story-copy", { y: -34, opacity: 0, duration: 0.5 }, 1.72)
-        .fromTo(".shoe-story-finale", { y: 40, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.65 }, 2.08)
-        .fromTo(".shoe-story-progress i", { scaleX: 0 }, { scaleX: 1, ease: "none", duration: 3.25 }, 0);
+        .to(".shoe-bg-iris", { opacity: 1, duration: 0.95 }, 0.32)
+        .fromTo(".shoe-story-copy", { y: 34, opacity: 0 }, { y: 0, opacity: 1, duration: 0.62 }, 0.48)
+        .to(".shoe-bg-night", { opacity: 1, duration: 1.08 }, 1.82)
+        .to(".shoe-story-copy", { y: -28, opacity: 0, duration: 0.46 }, 1.88)
+        .fromTo(".shoe-story-finale", { y: 32, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.62 }, 2.23)
+        .fromTo(".shoe-story-bridge", { clipPath: "inset(100% 0 0 0)" }, { clipPath: "inset(0% 0 0 0)", duration: 0.56, ease: "none" }, 3.04)
+        .fromTo(".shoe-story-progress i", { scaleX: 0 }, { scaleX: 1, ease: "none", duration: 3.5 }, 0);
     }, section);
     return () => context.revert();
   }, []);
 
-  useEffect(() => {
-    if (!shouldLoad || !canvasRef.current) return;
-    const canvas = canvasRef.current;
-    const wrapper = canvas.parentElement;
-    if (!wrapper) return;
-
-    let renderer: THREE.WebGLRenderer;
-    try {
-      renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, powerPreference: "high-performance" });
-    } catch {
-      queueMicrotask(() => setFailed(true));
-      return;
-    }
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
-    renderer.outputColorSpace = THREE.SRGBColorSpace;
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 0.94;
-
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 100);
-    camera.position.set(0, 0.1, 4.05);
-    scene.add(new THREE.HemisphereLight(0xe9f8ff, 0x10172f, 2.8));
-    const key = new THREE.DirectionalLight(0xfff2e6, 4.8);
-    key.position.set(4, 5, 5);
-    scene.add(key);
-    const rim = new THREE.DirectionalLight(0xff6076, 4.2);
-    rim.position.set(-4, 1, -3);
-    scene.add(rim);
-    const fill = new THREE.DirectionalLight(0x7fdcff, 3.3);
-    fill.position.set(-3, -1, 4);
-    scene.add(fill);
-
-    const pivot = new THREE.Group();
-    scene.add(pivot);
-    shoeRef.current = pivot;
-    let frame = 0;
-
-    const loader = new GLTFLoader();
-    loader.setMeshoptDecoder(MeshoptDecoder);
-    loader.load("/models/dania-shoe.glb", async (gltf) => {
-      const shoe = gltf.scene;
-      const streetMaterial = await gltf.parser.getDependency("material", 2) as THREE.Material;
-      const box = new THREE.Box3().setFromObject(shoe);
-      const size = box.getSize(new THREE.Vector3());
-      const center = box.getCenter(new THREE.Vector3());
-      shoe.position.sub(center);
-      shoe.scale.setScalar(2.85 / Math.max(size.x, size.y, size.z));
-      shoe.scale.y *= 1.12;
-      shoe.rotation.set(-0.08, 0, 0.06);
-      shoe.traverse((object) => {
-        if (!(object instanceof THREE.Mesh)) return;
-        object.castShadow = false;
-        object.receiveShadow = false;
-        object.material = streetMaterial;
-        const materials = Array.isArray(object.material) ? object.material : [object.material];
-        materials.forEach((material) => {
-          if (material instanceof THREE.MeshStandardMaterial) {
-            material.envMapIntensity = 0.72;
-            material.roughness = Math.max(material.roughness, 0.42);
-            material.needsUpdate = true;
-          }
-        });
-      });
-      pivot.add(shoe);
-      setLoaded(true);
-    }, undefined, () => setFailed(true));
-
-    const resize = () => {
-      const width = wrapper.clientWidth;
-      const height = wrapper.clientHeight;
-      if (!width || !height) return;
-      renderer.setSize(width, height, false);
-      camera.aspect = width / height;
-      camera.updateProjectionMatrix();
-    };
-    const resizeObserver = new ResizeObserver(resize);
-    resizeObserver.observe(wrapper);
-    resize();
-
-    const render = () => {
-      const shoe = shoeRef.current;
-      if (shoe) {
-        shoe.rotation.y = -0.62 + spinRef.current.value;
-        shoe.rotation.x = -0.09 + Math.sin(spinRef.current.value * 0.72) * 0.12;
-        shoe.rotation.z = 0.08 + Math.sin(spinRef.current.value * 0.44) * 0.055;
-      }
-      renderer.render(scene, camera);
-      frame = requestAnimationFrame(render);
-    };
-    render();
-
-    return () => {
-      cancelAnimationFrame(frame);
-      resizeObserver.disconnect();
-      scene.traverse((object) => {
-        if (!(object instanceof THREE.Mesh)) return;
-        object.geometry.dispose();
-        const materials = Array.isArray(object.material) ? object.material : [object.material];
-        materials.forEach((material) => material.dispose());
-      });
-      renderer.dispose();
-      shoeRef.current = null;
-    };
-  }, [shouldLoad]);
+  useEffect(() => () => {
+    splineAppRef.current = null;
+    shoeRef.current = null;
+    baseTransformRef.current = null;
+  }, []);
 
   return (
     <section ref={sectionRef} className="shoe-story" aria-labelledby="shoe-story-title">
@@ -193,24 +159,38 @@ export function ShoeScrollStory() {
           <span className="shoe-parallax-word shoe-parallax-word--two">PLAY</span>
         </div>
         <div className="shoe-orbit" aria-hidden="true"><i /><b /></div>
-        <div className={`shoe-canvas-wrap${loaded || failed ? " is-loaded" : ""}${failed ? " is-fallback" : ""}`}>
-          <canvas ref={canvasRef} aria-label="مدل سه‌بعدی کفش کودک که با اسکرول می‌چرخد" />
-          {failed && <span className="shoe-fallback" role="img" aria-label="کتانی آبی کودک" />}
+        <div
+          className={`shoe-canvas-wrap shoe-spline-wrap${loaded || failed ? " is-loaded" : ""}${failed ? " is-fallback" : ""}`}
+          role="img"
+          aria-label="مدل سه‌بعدی کفش کودک که با اسکرول می‌چرخد"
+        >
+          {shouldLoad && !failed && (
+            <SplineScene
+              className="shoe-spline"
+              scene={SPLINE_SCENE}
+              onLoad={handleSplineLoad}
+              renderOnDemand={false}
+            />
+          )}
+          {failed && <span className="shoe-fallback" aria-hidden="true" />}
           {!loaded && !failed && <span className="shoe-loading">در حال آماده‌سازی سه‌بعدی…</span>}
         </div>
         <div className="shoe-story-copy">
-          <span>جزئیات از نزدیک</span>
-          <h2 id="shoe-story-title">وزن کم.<br/><em>انعطاف بیشتر.</em></h2>
-          <p>اسکرول کن تا کفش بچرخد.</p>
+          <span>برای دویدن، پریدن، کشف کردن</span>
+          <h2 id="shoe-story-title">راحت برای امروز.<br/><em>آماده برای هر بازی.</em></h2>
+          <p>با اسکرول، کفش را از هر زاویه ببین.</p>
         </div>
         <div className="shoe-story-finale">
-          <span>مدل بعدی</span>
-          <strong>کفش مناسبش را پیدا کن.</strong>
+          <span>انتخاب با تو</span>
+          <strong>کفشی که پا به پات می‌آد.</strong>
           <Link href="/shop">دیدن کفش‌ها <ArrowLeftIcon /></Link>
+        </div>
+        <div className="shoe-story-bridge" aria-hidden="true">
+          <span>NEXT</span><span>MOVE</span>
         </div>
         <span className="shoe-scroll-rail" aria-hidden="true"><i /> SCROLL / SPIN</span>
         <span className="shoe-story-progress" aria-hidden="true"><i /></span>
-        <small className="shoe-credit">3D model © Shopify · CC BY 4.0</small>
+        <small className="shoe-credit">Interactive 3D scene via Spline</small>
       </div>
     </section>
   );

@@ -1,7 +1,6 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useRef, useState } from "react";
 
 const DynamicShoeStory = dynamic(
   () => import("@/components/shoe-scroll-story").then((module) => module.ShoeScrollStory),
@@ -12,35 +11,17 @@ function ShoeStoryPlaceholder() {
   return (
     <section className="shoe-story shoe-story-placeholder" aria-hidden="true">
       <div className="shoe-story-sticky">
-        <span>۳۶۰°</span>
+        <div className="shoe-story-bg shoe-bg-pearl" />
+        <div className="shoe-story-entry">
+          <span className="shoe-parallax-word shoe-parallax-word--one">MOVE</span>
+          <span className="shoe-parallax-word shoe-parallax-word--two">PLAY</span>
+        </div>
+        <span className="shoe-placeholder-orbit"><i /></span>
       </div>
     </section>
   );
 }
 
 export function ShoeStoryGate() {
-  const triggerRef = useRef<HTMLElement>(null);
-  const [active, setActive] = useState(false);
-
-  useEffect(() => {
-    const trigger = triggerRef.current;
-    if (!trigger) return;
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) {
-        setActive(true);
-        observer.disconnect();
-      }
-    }, { rootMargin: "0px 0px -35% 0px" });
-    observer.observe(trigger);
-    return () => observer.disconnect();
-  }, []);
-
-  if (active) return <DynamicShoeStory />;
-  return (
-    <section ref={triggerRef} className="shoe-story shoe-story-placeholder" aria-hidden="true">
-      <div className="shoe-story-sticky">
-        <span>۳۶۰°</span>
-      </div>
-    </section>
-  );
+  return <DynamicShoeStory />;
 }

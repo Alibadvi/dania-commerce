@@ -6,6 +6,7 @@ import { ArrowLeftIcon, RefreshIcon, RulerIcon, ShieldIcon, TruckIcon } from "@/
 import { ProductCard } from "@/components/product-card";
 import { GlassHero } from "@/components/glass-hero";
 import { ShoeStoryGate } from "@/components/shoe-story-gate";
+import { CollectionPortals } from "@/components/collection-portals";
 
 export function HomePage({ products }: { products: Product[] }) {
   return <main>
@@ -13,14 +14,7 @@ export function HomePage({ products }: { products: Product[] }) {
 
     <ShoeStoryGate />
 
-    <section className="categories section">
-      <div className="container"><div className="section-heading"><div><span className="eyebrow">دو مسیر، یک استاندارد</span><h2>برای حرکت آزاد</h2></div><Link href="/shop" className="arrow-link">دیدن همه <ArrowLeftIcon /></Link></div>
-        <div className="category-grid">
-          <Link href="/shop?category=girl" className="category-card girls"><div className="category-shoe product-image bottom-left"/><span>دخترانه</span><strong>رنگ، ریتم، حرکت</strong><i><ArrowLeftIcon /></i></Link>
-          <Link href="/shop?category=boy" className="category-card boys"><div className="category-shoe product-image top-right"/><span>پسرانه</span><strong>سبک، محکم، آماده</strong><i><ArrowLeftIcon /></i></Link>
-        </div>
-      </div>
-    </section>
+    <CollectionPortals />
 
     <section className="featured section"><div className="container"><div className="section-heading"><div><span className="eyebrow">محبوبِ پاهای کوچک</span><h2>بیشتر دوست‌داشتنی‌ها</h2></div><Link href="/shop" className="arrow-link">همه محصولات <ArrowLeftIcon /></Link></div><div className="product-grid">{products.slice(0, 4).map((product) => <ProductCard key={product.id} product={product}/>)}</div></div></section>
 
