@@ -7,7 +7,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import type { Product } from "@/lib/catalog";
 import { formatPrice } from "@/lib/catalog";
 import type { CartLine, CartOrder, CustomerAccount } from "@/lib/commerce-types";
-import { BagIcon, CloseIcon, InstagramIcon, MenuIcon, UserIcon } from "@/components/icons";
+import { BagIcon, CloseIcon, InstagramIcon, UserIcon } from "@/components/icons";
 import { DaniaWordmark } from "@/components/dania-wordmark";
 import { IntroProvider } from "@/components/intro-context";
 import { SiteLoader } from "@/components/site-loader";
@@ -72,6 +72,7 @@ export function ShopShell({ children, catalog }: { children: ReactNode; catalog:
   const [cartOpen, setCartOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [introReady, setIntroReady] = useState(false);
+  const [routeLoaderKey, setRouteLoaderKey] = useState(0);
   const [customer, setCustomer] = useState<CustomerAccount | null>(null);
   const [scrolled, setScrolled] = useState(false);
   const reduceMotion = useReducedMotion();
@@ -139,6 +140,27 @@ export function ShopShell({ children, catalog }: { children: ReactNode; catalog:
   }, []);
 
   useEffect(() => {
+    const beginRouteTransition = (event: MouseEvent) => {
+      if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      const anchor = target.closest<HTMLAnchorElement>("a[href]");
+      if (!anchor || anchor.target === "_blank" || anchor.hasAttribute("download") || anchor.dataset.loader === "false") return;
+
+      const destination = new URL(anchor.href, window.location.href);
+      if (destination.origin !== window.location.origin) return;
+      const current = new URL(window.location.href);
+      const sameDocument = destination.pathname === current.pathname && destination.search === current.search;
+      if (sameDocument) return;
+
+      setRouteLoaderKey((key) => key + 1);
+    };
+
+    document.addEventListener("click", beginRouteTransition, true);
+    return () => document.removeEventListener("click", beginRouteTransition, true);
+  }, []);
+
+  useEffect(() => {
     if (!menuOpen) return;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -198,6 +220,13 @@ export function ShopShell({ children, catalog }: { children: ReactNode; catalog:
     <ShopContext.Provider value={value}>
       <IntroProvider ready={introReady}>
       <SiteLoader onComplete={() => setIntroReady(true)} />
+      {routeLoaderKey > 0 && (
+        <SiteLoader
+          key={routeLoaderKey}
+          mode="route"
+          onComplete={() => setRouteLoaderKey(0)}
+        />
+      )}
       <motion.header
         className={`site-header${scrolled ? " is-scrolled" : ""}`}
         initial={{ y: reduceMotion ? 0 : "-110%", opacity: reduceMotion ? 1 : 0 }}
@@ -205,7 +234,16 @@ export function ShopShell({ children, catalog }: { children: ReactNode; catalog:
         transition={{ duration: reduceMotion ? 0.18 : 0.82, delay: reduceMotion ? 0 : 0.08, ease: [0.16, 1, 0.3, 1] }}
       >
         <div className="container header-inner">
-          <button className="icon-button mobile-menu-button" aria-label="باز کردن منو" onClick={() => setMenuOpen(true)}><MenuIcon /><span>منو</span></button>
+          <button
+            className={`icon-button mobile-menu-button${menuOpen ? " is-active" : ""}`}
+            aria-label="باز کردن منو"
+            aria-expanded={menuOpen}
+            aria-controls="mobile-navigation"
+            onClick={() => setMenuOpen(true)}
+          >
+            <span className="hamburger-glyph" aria-hidden="true"><i /><i /></span>
+            <span className="mobile-menu-label">منو</span>
+          </button>
           <Link href="/" className="brand header-brand" aria-label="دانیا، صفحه اصلی"><DaniaWordmark /><small>کفش کودک</small></Link>
           <nav className="main-nav" aria-label="منوی اصلی">
             <Link href="/shop?category=girl"><small>۰۱</small><span data-hover="دخترانه">دخترانه</span></Link><Link href="/shop?category=boy"><small>۰۲</small><span data-hover="پسرانه">پسرانه</span></Link><Link href="/about"><small>۰۳</small><span data-hover="درباره ما">درباره ما</span></Link><Link href="/contact"><small>۰۴</small><span data-hover="تماس با ما">تماس با ما</span></Link>
@@ -250,9 +288,9 @@ export function ShopShell({ children, catalog }: { children: ReactNode; catalog:
         {value.cart.length > 0 && <div className="drawer-footer"><div className="drawer-total"><span>جمع سبد</span><strong>{formatPrice(order?.subTotal ?? 0)} تومان</strong></div><Link href="/checkout" className="button primary wide" onClick={() => setCartOpen(false)}>ادامه و ثبت سفارش</Link><span className="secure-note">اطلاعات سفارش با اتصال امن ثبت می‌شود</span></div>}
       </aside>
 
-      <div className={`mobile-menu ${menuOpen ? "is-open" : ""}`} role="dialog" aria-modal="true" aria-label="منوی دانیا" aria-hidden={!menuOpen} onMouseDown={(event) => { if (event.target === event.currentTarget) setMenuOpen(false); }}>
+      <div id="mobile-navigation" className={`mobile-menu ${menuOpen ? "is-open" : ""}`} role="dialog" aria-modal="true" aria-label="منوی دانیا" aria-hidden={!menuOpen} onMouseDown={(event) => { if (event.target === event.currentTarget) setMenuOpen(false); }}>
         <div className="mobile-menu-panel">
-          <div className="mobile-menu-top"><Link href="/" className="brand mobile-brand-plate" aria-label="دانیا، صفحه اصلی" onClick={() => setMenuOpen(false)}><DaniaWordmark /></Link><button className="mobile-close" onClick={() => setMenuOpen(false)} aria-label="بستن منو"><CloseIcon /></button></div>
+          <div className="mobile-menu-top"><Link href="/" className="brand mobile-brand-plate" aria-label="دانیا، صفحه اصلی" onClick={() => setMenuOpen(false)}><DaniaWordmark /></Link><button className="mobile-close" onClick={() => setMenuOpen(false)} aria-label="بستن منو"><span className="hamburger-glyph close-glyph" aria-hidden="true"><i /><i /></span></button></div>
           <Link className={`mobile-member-card${customer ? " is-authenticated" : ""}`} href="/account" onClick={() => setMenuOpen(false)}>
             <span className="mobile-member-avatar" aria-hidden="true">{customerInitial || <UserIcon />}</span>
             <span className="mobile-member-copy"><small>{customer ? "عضو خانواده دانیا" : "حساب شخصی دانیا"}</small><strong>{customer ? `سلام ${customerFirstName}` : "ورود / ساخت حساب"}</strong><em>{customer ? "سفارش‌ها و مشخصاتت اینجاست" : "خرید سریع‌تر و پیگیری سفارش‌ها"}</em></span>
