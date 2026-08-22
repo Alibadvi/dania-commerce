@@ -73,6 +73,7 @@ export function ShopShell({ children, catalog }: { children: ReactNode; catalog:
   const [menuOpen, setMenuOpen] = useState(false);
   const [introReady, setIntroReady] = useState(false);
   const [customer, setCustomer] = useState<CustomerAccount | null>(null);
+  const [scrolled, setScrolled] = useState(false);
   const reduceMotion = useReducedMotion();
 
   const runCartAction = useCallback(async (body?: Record<string, unknown>, openCart = false) => {
@@ -129,6 +130,13 @@ export function ShopShell({ children, catalog }: { children: ReactNode; catalog:
       window.removeEventListener("focus", syncCustomer);
     };
   }, [refreshCustomer]);
+
+  useEffect(() => {
+    const updateHeader = () => setScrolled(window.scrollY > 18);
+    updateHeader();
+    window.addEventListener("scroll", updateHeader, { passive: true });
+    return () => window.removeEventListener("scroll", updateHeader);
+  }, []);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -191,7 +199,7 @@ export function ShopShell({ children, catalog }: { children: ReactNode; catalog:
       <IntroProvider ready={introReady}>
       <SiteLoader onComplete={() => setIntroReady(true)} />
       <motion.header
-        className="site-header"
+        className={`site-header${scrolled ? " is-scrolled" : ""}`}
         initial={{ y: reduceMotion ? 0 : "-110%", opacity: reduceMotion ? 1 : 0 }}
         animate={introReady ? { y: 0, opacity: 1 } : { y: reduceMotion ? 0 : "-110%", opacity: reduceMotion ? 1 : 0 }}
         transition={{ duration: reduceMotion ? 0.18 : 0.82, delay: reduceMotion ? 0 : 0.08, ease: [0.16, 1, 0.3, 1] }}
@@ -200,7 +208,7 @@ export function ShopShell({ children, catalog }: { children: ReactNode; catalog:
           <button className="icon-button mobile-menu-button" aria-label="باز کردن منو" onClick={() => setMenuOpen(true)}><MenuIcon /><span>منو</span></button>
           <Link href="/" className="brand header-brand" aria-label="دانیا، صفحه اصلی"><DaniaWordmark /><small>کفش کودک</small></Link>
           <nav className="main-nav" aria-label="منوی اصلی">
-            <Link href="/shop?category=girl"><small>۰۱</small><span>دخترانه</span></Link><Link href="/shop?category=boy"><small>۰۲</small><span>پسرانه</span></Link><Link href="/about"><small>۰۳</small><span>درباره ما</span></Link><Link href="/contact"><small>۰۴</small><span>تماس با ما</span></Link>
+            <Link href="/shop?category=girl"><small>۰۱</small><span data-hover="دخترانه">دخترانه</span></Link><Link href="/shop?category=boy"><small>۰۲</small><span data-hover="پسرانه">پسرانه</span></Link><Link href="/about"><small>۰۳</small><span data-hover="درباره ما">درباره ما</span></Link><Link href="/contact"><small>۰۴</small><span data-hover="تماس با ما">تماس با ما</span></Link>
           </nav>
           <div className="header-actions">
             <Link className={`account-link${customer ? " is-authenticated" : ""}`} href="/account" aria-label={customerName ? `حساب ${customerName}` : "ورود یا عضویت"}>
