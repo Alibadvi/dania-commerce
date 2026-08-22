@@ -30,25 +30,22 @@ export function GlassHero() {
         animate={ready ? { opacity: 1, y: 0 } : { opacity: 0, y: 22 }}
         transition={{ ...reveal, delay: reduceMotion ? 0 : 0.24 }}
       >
-        <span className="hero-kicker"><i /> کالکشن تازه‌ی دانیا</span>
-        <h1 id="home-hero-title">سبک برای پا،<br/><em>آماده برای بازی.</em></h1>
-        <p>کفش‌های راحت دانیا برای دویدن، کشف کردن و روزهای پرماجرا.</p>
+        <h1 id="home-hero-title">بذار راحت<br/><em>بازی کنه.</em></h1>
+        <p>کفش‌های دانیا سبک، نرم و مناسب پاهای در حال رشدند.</p>
         <div className="dania-hero-actions">
-          <Link href="/shop" className="hero-shop-button">
-            <span>مشاهده‌ی کفش‌ها</span>
+          <Link href="/shop" className="hero-shop-button" aria-label="دیدن مدل‌ها">
+            <span className="hero-button-label-window" aria-hidden="true">
+              <span className="hero-button-label-track">
+                {[0, 1].map((group) => (
+                  <span className="hero-button-label-group" key={group}>
+                    <span>دیدن مدل‌ها</span><b>•</b><span>دیدن مدل‌ها</span><b>•</b>
+                  </span>
+                ))}
+              </span>
+            </span>
             <i><ArrowLeftIcon /></i>
           </Link>
         </div>
-      </motion.div>
-      <motion.div
-        className="hero-edition-mark"
-        initial={{ opacity: 0, x: reduceMotion ? 0 : -20 }}
-        animate={ready ? { opacity: 1, x: 0 } : { opacity: 0, x: reduceMotion ? 0 : -20 }}
-        transition={{ ...reveal, delay: reduceMotion ? 0 : 0.4 }}
-        aria-hidden="true"
-      >
-        <small>DANIA KIDS / 01</small>
-        <strong>LIGHT FEET.<br/>BIG ENERGY.</strong>
       </motion.div>
       <motion.div
         className="hero-word-marquee"
