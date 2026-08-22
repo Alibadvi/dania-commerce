@@ -1722,24 +1722,24 @@ body { background: var(--paper); }
 .hero-section {
   padding: 0;
   overflow: hidden;
-  background: #e5e9e8;
+  background: #e8e6df;
 }
 .dania-hero {
   height: max(680px,calc(100svh - 92px));
   min-height: 0;
-  background: #e5e9e8;
+  background: #e8e6df;
   color: #132b48;
 }
 .dania-hero-photo {
-  background-color: #e5e9e8;
-  background-image: url('/images/dania-hero-group-v3.webp');
+  background-color: #e8e6df;
+  background-image: url('/images/dania-hero-shoe-led-desktop-v4.webp');
   background-position: center 70%;
   background-size: cover;
   background-repeat: no-repeat;
   transform-origin: center;
 }
 .hero-color-wash {
-  background: linear-gradient(90deg,rgba(229,233,232,0) 38%,rgba(229,233,232,.08) 60%,rgba(229,233,232,.78) 100%);
+  background: linear-gradient(90deg,rgba(232,230,223,0) 38%,rgba(232,230,223,.07) 58%,rgba(232,230,223,.78) 100%);
 }
 .hero-color-wash::before,.hero-color-wash::after { content: none; }
 .hero-top-marquee {
@@ -1775,7 +1775,10 @@ body { background: var(--paper); }
   white-space: nowrap;
 }
 .hero-top-group i { color: #ff777d; font-size: 8px; font-style: normal; }
-@keyframes hero-top-flow { to { transform: translate3d(-50%,0,0); } }
+@keyframes hero-top-flow {
+  from { transform: translate3d(-50%,0,0); }
+  to { transform: translate3d(0,0,0); }
+}
 .dania-hero-copy {
   top: 49%;
   right: clamp(32px,7.4vw,118px);
@@ -1868,13 +1871,14 @@ body { background: var(--paper); }
 @media (max-width: 700px) {
   .dania-hero {
     height: clamp(720px,calc(100svh - 68px),860px);
-    background: #e5e9e8;
+    background: #e8e6df;
   }
   .dania-hero-photo {
     inset: 0 0 auto;
     height: calc(100% - 285px);
+    background-image: url('/images/dania-hero-shoe-led-mobile-v4.webp');
     background-size: cover;
-    background-position: 31% center;
+    background-position: center 54%;
     transform-origin: center top;
   }
   .hero-color-wash { display: none; }
@@ -1895,9 +1899,15 @@ body { background: var(--paper); }
   }
   .hero-overline { margin-bottom: 7px; font-size: 8px; }
   .hero-shop-button { min-height: 43px; padding: 8px 14px 8px 15px; border-radius: 11px; font-size: 10px; }
-  .hero-top-marquee { height: 28px; background: rgba(241,244,242,.56); }
+  .hero-top-marquee {
+    height: 30px;
+    border-bottom-color: rgba(255,255,255,.18);
+    background: rgba(19,43,72,.84);
+    color: rgba(255,255,255,.9);
+    backdrop-filter: blur(12px) saturate(120%);
+  }
   .hero-top-track { animation-duration: 27s; }
-  .hero-top-group > span { padding-left: 25px; gap: 25px; font-size: 7px; letter-spacing: 1.45px; }
+  .hero-top-group > span { padding-left: 25px; gap: 25px; font-size: 8px; letter-spacing: 1.45px; }
   .hero-word-marquee { height: 56px; }
   .hero-word-track { animation-duration: 19s; }
   .hero-word-group > span {
