@@ -1725,9 +1725,9 @@ body { background: var(--paper); }
   background: #091b30;
 }
 .dania-hero {
-  height: clamp(680px,calc(100svh - 92px),940px);
+  height: max(680px,calc(100svh - 92px));
   min-height: 0;
-  background: #0a1d33;
+  background: #9eacb6;
   color: white;
 }
 .dania-hero-photo {
@@ -1744,9 +1744,9 @@ body { background: var(--paper); }
 }
 .hero-color-wash::before,.hero-color-wash::after { content: none; }
 .dania-hero-copy {
-  top: 47%;
+  top: 48%;
   right: clamp(32px,7.4vw,118px);
-  width: min(47vw,650px);
+  width: min(42vw,540px);
   transform: translateY(-50%);
 }
 .hero-kicker {
@@ -1762,19 +1762,19 @@ body { background: var(--paper); }
   box-shadow: 0 0 0 5px rgba(255,109,121,.14),0 0 18px rgba(255,109,121,.48);
 }
 .dania-hero h1 {
-  max-width: 650px;
-  margin: 22px 0 20px;
+  max-width: 540px;
+  margin: 20px 0 18px;
   color: #fff;
-  font-size: clamp(64px,6.5vw,102px);
-  line-height: .98;
-  letter-spacing: -6px;
+  font-size: clamp(52px,4.8vw,76px);
+  line-height: 1.08;
+  letter-spacing: -3.8px;
   text-shadow: 0 10px 44px rgba(0,0,0,.18);
 }
 .dania-hero h1 em { color: #a7eaff; }
 .dania-hero h1 em::after { content: none; }
 .dania-hero-copy > p {
-  max-width: 470px;
-  margin-bottom: 30px;
+  max-width: 420px;
+  margin-bottom: 27px;
   color: rgba(239,248,255,.74);
   font-size: clamp(13px,1.1vw,16px);
 }
@@ -1879,8 +1879,12 @@ body { background: var(--paper); }
 @keyframes hero-word-flow { to { transform: translate3d(-50%,0,0); } }
 
 @media (max-width: 980px) {
-  .dania-hero-copy { right: 5vw; width: min(55vw,590px); }
-  .dania-hero h1 { font-size: clamp(56px,7.8vw,78px); letter-spacing: -4.8px; }
+  .dania-hero-copy { right: 5vw; width: min(50vw,500px); }
+  .dania-hero h1 { font-size: clamp(46px,6.8vw,64px); letter-spacing: -3.2px; }
+}
+
+@media (min-width: 1200px) and (min-aspect-ratio: 21/9) {
+  .dania-hero-photo { background-position: left center; background-size: auto 100%; }
 }
 
 @media (max-width: 700px) {
@@ -1889,15 +1893,15 @@ body { background: var(--paper); }
     background: #0c2138;
   }
   .dania-hero-photo {
-    background-size: auto 67%;
-    background-position: 37% 100%;
+    background-size: auto 62%;
+    background-position: 25% 100%;
   }
   .hero-color-wash {
     background:
       linear-gradient(180deg,#081a2f 0,#0b263f 30%,rgba(11,38,63,.8) 42%,rgba(7,20,36,.04) 67%,rgba(5,17,31,.52) 100%);
   }
   .dania-hero-copy {
-    top: 54px;
+    top: clamp(40px,6svh,56px);
     right: 22px;
     left: 22px;
     width: auto;
@@ -1905,11 +1909,11 @@ body { background: var(--paper); }
   }
   .hero-kicker { padding: 7px 11px; font-size: 8px; }
   .dania-hero h1 {
-    max-width: 390px;
-    margin: 16px 0 13px;
-    font-size: clamp(46px,13.4vw,60px);
-    line-height: 1;
-    letter-spacing: -4px;
+    max-width: 350px;
+    margin: 15px 0 12px;
+    font-size: clamp(37px,10.8vw,45px);
+    line-height: 1.1;
+    letter-spacing: -2.7px;
   }
   .dania-hero-copy > p {
     max-width: 330px;
@@ -1932,8 +1936,8 @@ body { background: var(--paper); }
 }
 
 @media (max-width: 390px) {
-  .dania-hero-copy { top: 42px; right: 18px; left: 18px; }
-  .dania-hero h1 { font-size: 44px; letter-spacing: -3.4px; }
+  .dania-hero-copy { top: 36px; right: 18px; left: 18px; }
+  .dania-hero h1 { font-size: 36px; letter-spacing: -2.2px; }
   .dania-hero-copy > p { max-width: 290px; }
 }
 

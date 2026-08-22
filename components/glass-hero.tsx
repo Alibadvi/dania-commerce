@@ -10,7 +10,8 @@ const heroWords = ["PLAY", "DREAM", "RUN", "GROW", "EXPLORE", "SMILE"];
 export function GlassHero() {
   const ready = useIntroReady();
   const reduceMotion = useReducedMotion();
-  const reveal = reduceMotion ? { duration: 0.2 } : { duration: 1.05, ease: [0.16, 1, 0.3, 1] as const };
+  const reveal = reduceMotion ? { duration: 0.2 } : { duration: 0.9, ease: [0.16, 1, 0.3, 1] as const };
+  const photoReveal = reduceMotion ? { duration: 0.2 } : { duration: 1.35, ease: [0.22, 1, 0.36, 1] as const };
 
   return (
     <section className="dania-hero" aria-labelledby="home-hero-title">
@@ -18,23 +19,23 @@ export function GlassHero() {
         className="dania-hero-photo"
         role="img"
         aria-label="کودکی شاد در حال بازی با کفش‌های رنگی دانیا"
-        initial={{ y: reduceMotion ? 0 : "34%", scale: reduceMotion ? 1 : 1.08 }}
-        animate={ready ? { y: 0, scale: 1 } : { y: reduceMotion ? 0 : "34%", scale: reduceMotion ? 1 : 1.08 }}
-        transition={reveal}
+        initial={{ opacity: reduceMotion ? 1 : 0, y: reduceMotion ? 0 : "-5%", scale: reduceMotion ? 1 : 1.035 }}
+        animate={ready ? { opacity: 1, y: 0, scale: 1 } : { opacity: reduceMotion ? 1 : 0, y: reduceMotion ? 0 : "-5%", scale: reduceMotion ? 1 : 1.035 }}
+        transition={photoReveal}
       />
       <div className="hero-color-wash" aria-hidden="true" />
       <motion.div
         className="dania-hero-copy"
-        initial={{ opacity: 0, y: 38 }}
-        animate={ready ? { opacity: 1, y: 0 } : { opacity: 0, y: 38 }}
+        initial={{ opacity: 0, y: 22 }}
+        animate={ready ? { opacity: 1, y: 0 } : { opacity: 0, y: 22 }}
         transition={{ ...reveal, delay: reduceMotion ? 0 : 0.24 }}
       >
         <span className="hero-kicker"><i /> کالکشن تازه‌ی دانیا</span>
-        <h1 id="home-hero-title">برای قدم‌هایی<br/><em>که آروم نمی‌گیرن.</em></h1>
-        <p>کفش‌های سبک، نرم و خوش‌رنگ؛ برای دویدن، کشف کردن و هر بازی تازه.</p>
+        <h1 id="home-hero-title">سبک برای پا،<br/><em>آماده برای بازی.</em></h1>
+        <p>کفش‌های راحت دانیا برای دویدن، کشف کردن و روزهای پرماجرا.</p>
         <div className="dania-hero-actions">
           <Link href="/shop" className="hero-shop-button">
-            <span>همین حالا خرید کن</span>
+            <span>مشاهده‌ی کفش‌ها</span>
             <i><ArrowLeftIcon /></i>
           </Link>
         </div>
