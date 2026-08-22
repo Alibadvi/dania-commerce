@@ -5,6 +5,8 @@ import { motion, useReducedMotion } from "framer-motion";
 import { ArrowLeftIcon } from "@/components/icons";
 import { useIntroReady } from "@/components/intro-context";
 
+const heroWords = ["PLAY", "DREAM", "RUN", "GROW", "EXPLORE", "SMILE"];
+
 export function GlassHero() {
   const ready = useIntroReady();
   const reduceMotion = useReducedMotion();
@@ -15,7 +17,7 @@ export function GlassHero() {
       <motion.div
         className="dania-hero-photo"
         role="img"
-        aria-label="کتانی مرجانی کودک در دنیایی روشن و رنگی"
+        aria-label="کودکی شاد در حال بازی با کفش‌های رنگی دانیا"
         initial={{ y: reduceMotion ? 0 : "34%", scale: reduceMotion ? 1 : 1.08 }}
         animate={ready ? { y: 0, scale: 1 } : { y: reduceMotion ? 0 : "34%", scale: reduceMotion ? 1 : 1.08 }}
         transition={reveal}
@@ -27,17 +29,41 @@ export function GlassHero() {
         animate={ready ? { opacity: 1, y: 0 } : { opacity: 0, y: 38 }}
         transition={{ ...reveal, delay: reduceMotion ? 0 : 0.24 }}
       >
-        <span className="hero-kicker"><i /> کالکشن شادِ تازه</span>
-        <h1 id="home-hero-title">دنیای کوچک،<br/><em>شادی‌های بزرگ.</em></h1>
-        <p>کفش‌های سبک و خوش‌رنگ برای بچه‌هایی که هر روز یک دنیای تازه می‌سازند.</p>
+        <span className="hero-kicker"><i /> کالکشن تازه‌ی دانیا</span>
+        <h1 id="home-hero-title">برای قدم‌هایی<br/><em>که آروم نمی‌گیرن.</em></h1>
+        <p>کفش‌های سبک، نرم و خوش‌رنگ؛ برای دویدن، کشف کردن و هر بازی تازه.</p>
         <div className="dania-hero-actions">
-          <Link href="/shop?category=girl" className="button dania-yellow">شروع ماجراجویی <ArrowLeftIcon /></Link>
-          <Link href="/shop" className="hero-text-link">دیدن همه کفش‌ها</Link>
+          <Link href="/shop" className="hero-shop-button">
+            <span>همین حالا خرید کن</span>
+            <i><ArrowLeftIcon /></i>
+          </Link>
         </div>
       </motion.div>
-      <motion.div className="hero-play-sticker" initial={{ opacity: 0, rotate: -20, scale: 0.7 }} animate={ready ? { opacity: 1, rotate: -8, scale: 1 } : {}} transition={{ ...reveal, delay: 0.46 }} aria-hidden="true"><span>PLAY</span><strong>BIG!</strong></motion.div>
-      <span className="hero-doodle-star" aria-hidden="true">✦</span>
-      <span className="hero-scroll-note" aria-hidden="true">اسکرول کن و بچرخان ↓</span>
+      <motion.div
+        className="hero-edition-mark"
+        initial={{ opacity: 0, x: reduceMotion ? 0 : -20 }}
+        animate={ready ? { opacity: 1, x: 0 } : { opacity: 0, x: reduceMotion ? 0 : -20 }}
+        transition={{ ...reveal, delay: reduceMotion ? 0 : 0.4 }}
+        aria-hidden="true"
+      >
+        <small>DANIA KIDS / 01</small>
+        <strong>LIGHT FEET.<br/>BIG ENERGY.</strong>
+      </motion.div>
+      <motion.div
+        className="hero-word-marquee"
+        initial={{ opacity: 0, y: reduceMotion ? 0 : 32 }}
+        animate={ready ? { opacity: 1, y: 0 } : { opacity: 0, y: reduceMotion ? 0 : 32 }}
+        transition={{ ...reveal, delay: reduceMotion ? 0 : 0.5 }}
+        aria-hidden="true"
+      >
+        <div className="hero-word-track">
+          {[0, 1].map((group) => (
+            <div className="hero-word-group" key={group}>
+              {heroWords.map((word) => <span key={`${group}-${word}`}>{word}<i>✦</i></span>)}
+            </div>
+          ))}
+        </div>
+      </motion.div>
     </section>
   );
 }
