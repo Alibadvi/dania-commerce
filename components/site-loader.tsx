@@ -3,12 +3,13 @@
 import Image from "next/image";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
+import { DaniaWordmark } from "@/components/dania-wordmark";
 
 const loaderCards = [
-  { image: "/images/danya-products.webp", className: "loader-card-blue", rotate: -13, x: -82, y: -15 },
-  { image: "/images/danya-catalog-grid.webp", className: "loader-card-lilac", rotate: 9, x: 74, y: 7 },
-  { image: "/images/danya-hero-dark.webp", className: "loader-card-dark", rotate: -5, x: -34, y: 20 },
-  { image: "/images/danya-hero.webp", className: "loader-card-coral", rotate: 5, x: 42, y: 31 },
+  { image: "/images/loader-kid-yellow.webp", rotate: -5.5, x: -22, y: 4 },
+  { image: "/images/loader-kid-blue.webp", rotate: 4.2, x: 22, y: -2 },
+  { image: "/images/loader-kids-coral.webp", rotate: -2.4, x: -10, y: 3 },
+  { image: "/images/loader-kid-cream.webp", rotate: 1.4, x: 9, y: -4 },
 ];
 
 export function SiteLoader({ onComplete }: { onComplete: () => void }) {
@@ -20,7 +21,7 @@ export function SiteLoader({ onComplete }: { onComplete: () => void }) {
   useEffect(() => {
     previousOverflow.current = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    const total = reduceMotion ? 480 : 2450;
+    const total = reduceMotion ? 480 : 2380;
     const started = performance.now();
     let frame = 0;
 
@@ -49,32 +50,43 @@ export function SiteLoader({ onComplete }: { onComplete: () => void }) {
           transition={{ duration: reduceMotion ? 0.18 : 0.88, ease: [0.76, 0, 0.24, 1] }}
           aria-label="در حال آماده‌سازی دانیا"
         >
+          <motion.div
+            className="loader-topline"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: reduceMotion ? 0 : 0.45, duration: 0.6 }}
+            aria-hidden="true"
+          >
+            <span>DANIA / KIDS</span>
+            <span>حرکت · بازی · کشف</span>
+          </motion.div>
+
           <div className="loader-pile" aria-hidden="true">
             {loaderCards.map((card, index) => (
               <motion.div
-                key={`${card.image}-${card.className}`}
-                className={`loader-card ${card.className}`}
-                initial={{ opacity: 0, y: 170, rotate: 0, scale: 0.72 }}
+                key={card.image}
+                className="loader-card"
+                initial={{ opacity: 1, y: "72vh", rotate: card.rotate * 0.2, scale: 0.96 }}
                 animate={{ opacity: 1, x: card.x, y: card.y, rotate: card.rotate, scale: 1 }}
-                transition={{ delay: reduceMotion ? 0 : 0.16 + index * 0.22, duration: reduceMotion ? 0.1 : 0.66, ease: [0.16, 1, 0.3, 1] }}
+                transition={{ delay: reduceMotion ? 0 : 0.12 + index * 0.24, duration: reduceMotion ? 0.1 : 0.72, ease: [0.2, 0.86, 0.22, 1] }}
               >
-                <Image src={card.image} alt="" fill sizes="(max-width: 700px) 42vw, 260px" priority />
+                <Image src={card.image} alt="" fill sizes="(max-width: 700px) 62vw, 290px" priority />
               </motion.div>
             ))}
           </div>
 
           <motion.div
             className="loader-logo"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: reduceMotion ? 0 : 0.72, duration: 0.65 }}
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: reduceMotion ? 0 : 1.02, duration: 0.62, ease: [0.16, 1, 0.3, 1] }}
           >
-            <Image src="/brand/dania-logo-loader.webp" alt="DANIA" fill sizes="(max-width: 700px) 84vw, 760px" priority />
+            <DaniaWordmark />
           </motion.div>
 
-          <div className="loader-meta" aria-hidden="true">
+          <div className="loader-status" aria-hidden="true">
             <span>دنیای شادِ پاهای کوچک</span>
-            <b>{progress.toLocaleString("fa-IR").padStart(3, "۰")}</b>
+            <i><b style={{ transform: `scaleX(${progress / 100})` }} /></i>
           </div>
         </motion.div>
       )}
