@@ -337,19 +337,21 @@ body { background: var(--paper); }
 .brand.light .dania-wordmark-image { filter: drop-shadow(0 0 16px rgba(88,185,231,.34)); }
 .brand.light small { color: #9ba7b4; }
 
-.site-loader { position: fixed; inset: 0; z-index: 1000; overflow: hidden; display: grid; place-items: center; isolation: isolate; background: #ffe568; color: var(--ink); direction: ltr; box-shadow: inset 0 0 140px rgba(255,255,255,.24); }
-.site-loader::before { content: ""; position: absolute; inset: -18%; z-index: -1; background: radial-gradient(circle at 84% 16%,rgba(53,226,255,.5) 0,rgba(53,226,255,.2) 19%,transparent 39%),radial-gradient(circle at 13% 84%,rgba(255,55,177,.27) 0,rgba(255,55,177,.12) 17%,transparent 36%),radial-gradient(circle at 48% -6%,rgba(196,255,66,.38) 0,transparent 34%),radial-gradient(circle at 50% 52%,rgba(255,250,218,.82) 0,transparent 40%); filter: blur(25px) saturate(112%); animation: loader-color-drift 7s ease-in-out infinite alternate; }
+.site-loader { position: fixed; inset: 0; z-index: 1000; overflow: hidden; display: grid; place-items: center; isolation: isolate; background: #06111f; color: white; direction: ltr; box-shadow: inset 0 0 180px rgba(0,0,0,.36); }
+.site-loader::before { content: ""; position: absolute; inset: -18%; z-index: -1; background: radial-gradient(circle at 82% 15%,rgba(36,220,255,.56) 0,rgba(36,220,255,.2) 19%,transparent 38%),radial-gradient(circle at 12% 84%,rgba(255,54,168,.4) 0,rgba(255,54,168,.14) 18%,transparent 37%),radial-gradient(circle at 51% -8%,rgba(218,255,62,.34) 0,transparent 31%),radial-gradient(circle at 50% 52%,rgba(28,72,116,.36) 0,transparent 43%); filter: blur(28px) saturate(125%); animation: loader-color-drift 7s ease-in-out infinite alternate; }
 @keyframes loader-color-drift { from { transform: translate3d(-1.5%,-1%,0) scale(1); } to { transform: translate3d(1.5%,1%,0) scale(1.04); } }
-.loader-topline { position: absolute; z-index: 5; top: clamp(22px,3.5vw,48px); left: clamp(22px,4vw,64px); right: clamp(22px,4vw,64px); display: flex; align-items: center; justify-content: space-between; color: rgba(23,42,70,.54); font: 700 8px/1.2 "Vazirmatn Variable",sans-serif; letter-spacing: 1.5px; direction: ltr; }
+.loader-topline { position: absolute; z-index: 5; top: clamp(22px,3.5vw,48px); left: clamp(22px,4vw,64px); right: clamp(22px,4vw,64px); display: flex; align-items: center; justify-content: space-between; color: rgba(255,255,255,.55); font: 700 8px/1.2 "Vazirmatn Variable",sans-serif; letter-spacing: 1.5px; direction: ltr; }
 .loader-topline span:last-child { direction: rtl; letter-spacing: 0; }
-.loader-pile { position: absolute; z-index: 2; left: 50%; top: 43%; width: clamp(205px,19vw,285px); aspect-ratio: 4/5; transform: translate(-50%,-50%); }
-.loader-card { position: absolute; inset: 0; overflow: hidden; border: 1px solid rgba(255,255,255,.68); border-radius: 2px; box-shadow: 0 22px 52px rgba(23,42,70,.11),0 3px 10px rgba(23,42,70,.06); transform-origin: 50% 82%; will-change: transform,opacity; }
+.loader-pile { position: absolute; z-index: 2; left: 50%; top: 50%; width: clamp(195px,17vw,260px); aspect-ratio: 4/5; transform: translate(-50%,-50%); }
+.loader-card { position: absolute; inset: 0; overflow: hidden; border: 1px solid rgba(255,255,255,.52); border-radius: 2px; box-shadow: 0 28px 70px rgba(0,0,0,.34),0 0 24px rgba(59,217,255,.08); transform-origin: 50% 82%; will-change: transform,opacity; }
 .loader-card img { object-fit: cover; }
-.loader-logo { position: absolute; z-index: 5; left: 0; right: 0; top: calc(43% + clamp(154px,13.2vw,204px)); width: clamp(218px,18vw,286px); margin-inline: auto; pointer-events: none; }
+.loader-logo { position: absolute; z-index: 5; inset: 0; width: clamp(270px,25vw,390px); height: fit-content; margin: auto; pointer-events: none; }
+.loader-logo::before { content: ""; position: absolute; z-index: -1; inset: -42% -22%; border-radius: 50%; background: radial-gradient(ellipse,rgba(239,253,255,.92) 0,rgba(180,238,255,.62) 34%,rgba(62,219,255,.2) 53%,transparent 72%); filter: blur(10px); }
 .loader-logo .dania-wordmark { width: 100%; }
-.loader-status { position: absolute; z-index: 6; left: 50%; bottom: clamp(24px,4vw,52px); width: clamp(170px,17vw,240px); display: grid; gap: 10px; transform: translateX(-50%); color: rgba(23,42,70,.58); font: 650 8px/1.4 "Vazirmatn Variable",sans-serif; text-align: center; direction: rtl; }
-.loader-status > i { height: 1px; overflow: hidden; background: rgba(23,42,70,.14); direction: ltr; }
-.loader-status > i > b { width: 100%; height: 100%; display: block; background: var(--ink); transform: scaleX(0); transform-origin: left center; }
+.loader-logo .dania-wordmark-image { filter: drop-shadow(0 0 14px rgba(47,218,255,.34)); }
+.loader-status { position: absolute; z-index: 6; left: 50%; bottom: clamp(24px,4vw,52px); width: clamp(170px,17vw,240px); display: grid; gap: 10px; transform: translateX(-50%); color: rgba(255,255,255,.58); font: 650 8px/1.4 "Vazirmatn Variable",sans-serif; text-align: center; direction: rtl; }
+.loader-status > i { height: 1px; overflow: visible; background: rgba(255,255,255,.14); direction: ltr; }
+.loader-status > i > b { width: 100%; height: 100%; display: block; background: linear-gradient(90deg,#2ce6ff,#d9ff45 52%,#ff49ae); box-shadow: 0 0 10px rgba(44,230,255,.7); transform: scaleX(0); transform-origin: left center; }
 
 .hero-section { padding: 0; overflow: hidden; background: #f8d646; }
 .dania-hero { position: relative; min-height: max(640px,calc(100svh - 78px)); overflow: hidden; isolation: isolate; background: #f5df9f; color: var(--ink); }
@@ -460,8 +462,8 @@ body { background: var(--paper); }
   .site-header { backdrop-filter: blur(15px); }
   .header-inner { height: 66px; }
   .dania-wordmark { width: 112px; }
-  .loader-pile { top: 42%; width: min(57vw,230px); }
-  .loader-logo { top: calc(42% + min(40vw,162px)); width: min(58vw,224px); }
+  .loader-pile { top: 50%; width: min(53vw,215px); }
+  .loader-logo { width: min(78vw,300px); }
   .loader-status { bottom: 24px; }
   .dania-hero { min-height: max(690px,calc(100svh - 66px)); }
   .dania-hero-photo { background-size: auto 57%; background-position: 32% 100%; }
