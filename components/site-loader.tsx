@@ -66,23 +66,18 @@ export function SiteLoader({ onComplete }: { onComplete: () => void }) {
               <motion.div
                 key={card.image}
                 className="loader-card"
-                initial={{ opacity: 1, y: "72vh", rotate: card.rotate * 0.2, scale: 0.96 }}
+                initial={{ opacity: 0, x: card.x * 2.2, y: "62vh", rotate: card.rotate * 1.8, scale: 0.985 }}
                 animate={{ opacity: 1, x: card.x, y: card.y, rotate: card.rotate, scale: 1 }}
-                transition={{ delay: reduceMotion ? 0 : 0.12 + index * 0.24, duration: reduceMotion ? 0.1 : 0.72, ease: [0.2, 0.86, 0.22, 1] }}
+                transition={{ delay: reduceMotion ? 0 : 0.1 + index * 0.25, duration: reduceMotion ? 0.1 : 0.82, ease: [0.22, 1, 0.36, 1] }}
               >
                 <Image src={card.image} alt="" fill sizes="(max-width: 700px) 62vw, 290px" priority />
               </motion.div>
             ))}
           </div>
 
-          <motion.div
-            className="loader-logo"
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: reduceMotion ? 0 : 1.02, duration: 0.62, ease: [0.16, 1, 0.3, 1] }}
-          >
-            <DaniaWordmark />
-          </motion.div>
+          <div className="loader-logo">
+            <DaniaWordmark animated />
+          </div>
 
           <div className="loader-status" aria-hidden="true">
             <span>دنیای شادِ پاهای کوچک</span>
