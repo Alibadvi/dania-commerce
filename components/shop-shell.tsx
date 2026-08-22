@@ -6,7 +6,7 @@ import type { ReactNode } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import type { Product } from "@/lib/catalog";
 import { formatPrice } from "@/lib/catalog";
-import type { CartLine, CartOrder } from "@/lib/commerce-types";
+import type { CartLine, CartOrder, CustomerAccount } from "@/lib/commerce-types";
 import { BagIcon, CloseIcon, InstagramIcon, MenuIcon, UserIcon } from "@/components/icons";
 import { DaniaWordmark } from "@/components/dania-wordmark";
 import { IntroProvider } from "@/components/intro-context";
@@ -30,6 +30,9 @@ type ShopContextValue = {
 };
 
 type ApiResponse = { order: CartOrder | null; error?: { message?: string } };
+type AccountApiResponse = { customer: CustomerAccount | null; error?: { message?: string } };
+
+const CUSTOMER_CHANGED_EVENT = "dania:customer-changed";
 
 const ShopContext = createContext<ShopContextValue | null>(null);
 
@@ -52,6 +55,16 @@ async function commerceRequest(body?: Record<string, unknown>): Promise<ApiRespo
   return payload;
 }
 
+async function customerRequest(): Promise<AccountApiResponse> {
+  const response = await fetch("/api/commerce?resource=account", {
+    credentials: "same-origin",
+    cache: "no-store",
+  });
+  const payload = await response.json() as AccountApiResponse;
+  if (!response.ok) throw new Error(payload.error?.message ?? "درخواست حساب انجام نشد.");
+  return payload;
+}
+
 export function ShopShell({ children, catalog }: { children: ReactNode; catalog: Product[] }) {
   const [order, setOrder] = useState<CartOrder | null>(null);
   const [cartBusy, setCartBusy] = useState(true);
@@ -59,6 +72,7 @@ export function ShopShell({ children, catalog }: { children: ReactNode; catalog:
   const [cartOpen, setCartOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [introReady, setIntroReady] = useState(false);
+  const [customer, setCustomer] = useState<CustomerAccount | null>(null);
   const reduceMotion = useReducedMotion();
 
   const runCartAction = useCallback(async (body?: Record<string, unknown>, openCart = false) => {
@@ -93,6 +107,28 @@ export function ShopShell({ children, catalog }: { children: ReactNode; catalog:
       .finally(() => { if (!cancelled) setCartBusy(false); });
     return () => { cancelled = true; };
   }, []);
+
+  const refreshCustomer = useCallback(async () => {
+    try {
+      const payload = await customerRequest();
+      setCustomer(payload.customer ?? null);
+    } catch {
+      setCustomer(null);
+    }
+  }, []);
+
+  useEffect(() => {
+    void refreshCustomer();
+    const syncCustomer = () => void refreshCustomer();
+    window.addEventListener(CUSTOMER_CHANGED_EVENT, syncCustomer);
+    window.addEventListener("pageshow", syncCustomer);
+    window.addEventListener("focus", syncCustomer);
+    return () => {
+      window.removeEventListener(CUSTOMER_CHANGED_EVENT, syncCustomer);
+      window.removeEventListener("pageshow", syncCustomer);
+      window.removeEventListener("focus", syncCustomer);
+    };
+  }, [refreshCustomer]);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -144,6 +180,12 @@ export function ShopShell({ children, catalog }: { children: ReactNode; catalog:
     setCartOpen,
   }), [catalog, order, cartBusy, cartError, runCartAction, refreshCart, cartOpen]);
 
+  const customerName = customer
+    ? [customer.firstName, customer.lastName].map((part) => part?.trim()).filter(Boolean).join(" ") || customer.emailAddress.split("@")[0] || "دوست دانیا"
+    : null;
+  const customerFirstName = customer?.firstName?.trim() || customerName;
+  const customerInitial = customerName?.slice(0, 1).toLocaleUpperCase("fa-IR") ?? "";
+
   return (
     <ShopContext.Provider value={value}>
       <IntroProvider ready={introReady}>
@@ -155,14 +197,19 @@ export function ShopShell({ children, catalog }: { children: ReactNode; catalog:
         transition={{ duration: reduceMotion ? 0.18 : 0.82, delay: reduceMotion ? 0 : 0.08, ease: [0.16, 1, 0.3, 1] }}
       >
         <div className="container header-inner">
-          <button className="icon-button mobile-menu-button" aria-label="باز کردن منو" onClick={() => setMenuOpen(true)}><MenuIcon /></button>
-          <Link href="/" className="brand" aria-label="دانیا، صفحه اصلی"><DaniaWordmark /><small>کفش کودک</small></Link>
+          <button className="icon-button mobile-menu-button" aria-label="باز کردن منو" onClick={() => setMenuOpen(true)}><MenuIcon /><span>منو</span></button>
+          <Link href="/" className="brand header-brand" aria-label="دانیا، صفحه اصلی"><DaniaWordmark /><small>کفش کودک</small></Link>
           <nav className="main-nav" aria-label="منوی اصلی">
-            <Link href="/shop?category=girl">دخترانه</Link><Link href="/shop?category=boy">پسرانه</Link><Link href="/about">درباره ما</Link><Link href="/contact">تماس با ما</Link>
+            <Link href="/shop?category=girl"><small>۰۱</small><span>دخترانه</span></Link><Link href="/shop?category=boy"><small>۰۲</small><span>پسرانه</span></Link><Link href="/about"><small>۰۳</small><span>درباره ما</span></Link><Link href="/contact"><small>۰۴</small><span>تماس با ما</span></Link>
           </nav>
           <div className="header-actions">
-            <Link className="account-link" href="/account"><UserIcon /><span>ورود / عضویت</span></Link>
-            <button className="cart-nav-button bag-button" aria-label="سبد خرید" onClick={() => setCartOpen(true)}><BagIcon /><span>سبد خرید</span>{value.cartCount > 0 && <b className="bag-count">{value.cartCount.toLocaleString("fa-IR")}</b>}</button>
+            <Link className={`account-link${customer ? " is-authenticated" : ""}`} href="/account" aria-label={customerName ? `حساب ${customerName}` : "ورود یا عضویت"}>
+              <span className="nav-account-avatar" aria-hidden="true">{customerInitial || <UserIcon />}</span>
+              <span className="nav-account-copy"><small>{customer ? "خوش اومدی" : "حساب دانیا"}</small><strong>{customerName ?? "ورود / عضویت"}</strong></span>
+            </Link>
+            <button className="cart-nav-button bag-button" aria-label="سبد خرید" onClick={() => setCartOpen(true)}>
+              <span className="nav-cart-icon"><BagIcon /></span><span className="nav-cart-copy"><small>انتخاب‌های من</small><strong>سبد خرید</strong></span>{value.cartCount > 0 && <b className="bag-count">{value.cartCount.toLocaleString("fa-IR")}</b>}
+            </button>
           </div>
         </div>
       </motion.header>
@@ -195,13 +242,18 @@ export function ShopShell({ children, catalog }: { children: ReactNode; catalog:
         {value.cart.length > 0 && <div className="drawer-footer"><div className="drawer-total"><span>جمع سبد</span><strong>{formatPrice(order?.subTotal ?? 0)} تومان</strong></div><Link href="/checkout" className="button primary wide" onClick={() => setCartOpen(false)}>ادامه و ثبت سفارش</Link><span className="secure-note">اطلاعات سفارش با اتصال امن ثبت می‌شود</span></div>}
       </aside>
 
-      <div className={`mobile-menu ${menuOpen ? "is-open" : ""}`} aria-hidden={!menuOpen} onMouseDown={(event) => { if (event.target === event.currentTarget) setMenuOpen(false); }}>
+      <div className={`mobile-menu ${menuOpen ? "is-open" : ""}`} role="dialog" aria-modal="true" aria-label="منوی دانیا" aria-hidden={!menuOpen} onMouseDown={(event) => { if (event.target === event.currentTarget) setMenuOpen(false); }}>
         <div className="mobile-menu-panel">
-          <div className="mobile-menu-top"><Link href="/" className="brand" onClick={() => setMenuOpen(false)}><DaniaWordmark /></Link><button className="mobile-close" onClick={() => setMenuOpen(false)} aria-label="بستن منو"><CloseIcon /></button></div>
-          <span className="mobile-menu-kicker">انتخاب مسیر</span>
-          <nav onClickCapture={() => setMenuOpen(false)}><Link href="/shop?category=girl"><small>۰۱</small><span>دخترانه</span></Link><Link href="/shop?category=boy"><small>۰۲</small><span>پسرانه</span></Link><Link href="/about"><small>۰۳</small><span>درباره ما</span></Link><Link href="/contact"><small>۰۴</small><span>تماس با ما</span></Link></nav>
-          <div className="mobile-menu-actions"><Link href="/account" onClick={() => setMenuOpen(false)}><UserIcon /><span><strong>ورود / عضویت</strong><small>حساب و سفارش‌های شما</small></span></Link><button onClick={() => { setMenuOpen(false); setCartOpen(true); }}><BagIcon /><span><strong>سبد خرید</strong><small>{value.cartCount ? `${value.cartCount.toLocaleString("fa-IR")} محصول` : "هنوز خالی است"}</small></span></button></div>
-          <p className="mobile-menu-foot">DANIA — برای حرکت آزاد</p>
+          <div className="mobile-menu-top"><Link href="/" className="brand mobile-brand-plate" aria-label="دانیا، صفحه اصلی" onClick={() => setMenuOpen(false)}><DaniaWordmark /></Link><button className="mobile-close" onClick={() => setMenuOpen(false)} aria-label="بستن منو"><CloseIcon /></button></div>
+          <Link className={`mobile-member-card${customer ? " is-authenticated" : ""}`} href="/account" onClick={() => setMenuOpen(false)}>
+            <span className="mobile-member-avatar" aria-hidden="true">{customerInitial || <UserIcon />}</span>
+            <span className="mobile-member-copy"><small>{customer ? "عضو خانواده دانیا" : "حساب شخصی دانیا"}</small><strong>{customer ? `سلام ${customerFirstName}` : "ورود / ساخت حساب"}</strong><em>{customer ? "سفارش‌ها و مشخصاتت اینجاست" : "خرید سریع‌تر و پیگیری سفارش‌ها"}</em></span>
+            <span className="mobile-member-arrow" aria-hidden="true">↙</span>
+          </Link>
+          <div className="mobile-menu-kicker"><span>COLLECTION</span><b>۰۱ — ۰۴</b></div>
+          <nav onClickCapture={() => setMenuOpen(false)}><Link href="/shop?category=girl"><small>۰۱</small><span><strong>دخترانه</strong><em>رنگ، بازی، حرکت</em></span></Link><Link href="/shop?category=boy"><small>۰۲</small><span><strong>پسرانه</strong><em>سبک برای ماجراجویی</em></span></Link><Link href="/about"><small>۰۳</small><span><strong>درباره ما</strong><em>قصه‌ی قدم‌های کوچک</em></span></Link><Link href="/contact"><small>۰۴</small><span><strong>تماس با ما</strong><em>کنارت هستیم</em></span></Link></nav>
+          <div className="mobile-menu-actions"><button onClick={() => { setMenuOpen(false); setCartOpen(true); }}><span className="mobile-cart-icon"><BagIcon /></span><span><small>سبد دانیا</small><strong>{value.cartCount ? `${value.cartCount.toLocaleString("fa-IR")} انتخاب برای کوچولوت` : "هنوز منتظر اولین انتخابه"}</strong></span><b>{value.cartCount.toLocaleString("fa-IR")}</b></button></div>
+          <p className="mobile-menu-foot"><span>DANIA KIDS</span><b>برای حرکت آزاد</b></p>
         </div>
       </div>
       </IntroProvider>

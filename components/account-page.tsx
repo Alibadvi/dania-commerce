@@ -16,6 +16,8 @@ type AccountResponse = {
 };
 type DashboardTab = "overview" | "addresses" | "orders" | "security";
 
+const CUSTOMER_CHANGED_EVENT = "dania:customer-changed";
+
 const tabs: Array<{ id: DashboardTab; label: string; description: string }> = [
   { id: "overview", label: "مشخصات من", description: "نام و شماره تماس" },
   { id: "addresses", label: "آدرس‌ها", description: "تحویل سریع‌تر" },
@@ -64,6 +66,7 @@ export function AccountPage() {
   async function reloadDashboard() {
     const payload = await accountRequest();
     setDashboard(payload.dashboard ?? null);
+    window.dispatchEvent(new Event(CUSTOMER_CHANGED_EVENT));
   }
 
   useEffect(() => {
@@ -82,6 +85,7 @@ export function AccountPage() {
     try {
       const payload = await accountRequest(body);
       if (payload.dashboard) setDashboard(payload.dashboard);
+      window.dispatchEvent(new Event(CUSTOMER_CHANGED_EVENT));
       if (success) setNotice(success);
       return true;
     } catch (actionError) {
