@@ -1,11 +1,13 @@
 "use client";
 
 import gsap from "gsap";
+import Link from "next/link";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.js";
+import { ArrowLeftIcon } from "@/components/icons";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -37,6 +39,21 @@ export function ShoeScrollStory() {
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const context = gsap.context(() => {
       if (reduceMotion) return;
+      const entrance = gsap.timeline({
+        scrollTrigger: {
+          trigger: section,
+          start: "top 92%",
+          end: "top top",
+          scrub: 1.15,
+          invalidateOnRefresh: true,
+        },
+      });
+      entrance
+        .fromTo(".shoe-story-sticky", { clipPath: "inset(8% 3.5% 0 3.5% round 40px)" }, { clipPath: "inset(0% 0% 0% 0% round 0px)", ease: "none" }, 0)
+        .fromTo(".shoe-parallax-word--one", { xPercent: -18, yPercent: 24 }, { xPercent: 8, yPercent: -5, ease: "none" }, 0)
+        .fromTo(".shoe-parallax-word--two", { xPercent: 16, yPercent: 34 }, { xPercent: -9, yPercent: -3, ease: "none" }, 0)
+        .fromTo(".shoe-canvas-wrap", { "--shoe-y": "18vh", "--shoe-scale": 0.72 }, { "--shoe-y": "0vh", "--shoe-scale": 1, ease: "none" }, 0);
+
       const timeline = gsap.timeline({
         scrollTrigger: {
           trigger: section,
@@ -47,13 +64,15 @@ export function ShoeScrollStory() {
         },
       });
       timeline
-        .to(spinRef.current, { value: Math.PI * 2.35, ease: "none", duration: 3 }, 0)
-        .to(".shoe-fallback", { rotationY: 360, rotationZ: 8, ease: "none", duration: 3 }, 0)
-        .to(".shoe-bg-sun", { opacity: 1, duration: 0.75 }, 0)
-        .to(".shoe-bg-sky", { opacity: 1, duration: 0.8 }, 0.8)
-        .to(".shoe-bg-navy", { opacity: 1, duration: 0.85 }, 1.75)
-        .to(".shoe-story-copy", { y: -22, opacity: 0, duration: 0.55 }, 1.55)
-        .fromTo(".shoe-story-finale", { y: 35, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6 }, 2.05);
+        .to(spinRef.current, { value: Math.PI * 3.15, ease: "none", duration: 3.25 }, 0)
+        .to(".shoe-fallback", { rotationY: 480, rotationZ: 7, ease: "none", duration: 3.25 }, 0)
+        .to(".shoe-story-entry", { opacity: 0, yPercent: -12, duration: 0.52 }, 0.1)
+        .to(".shoe-bg-iris", { opacity: 1, duration: 0.9 }, 0.25)
+        .fromTo(".shoe-story-copy", { y: 42, opacity: 0 }, { y: 0, opacity: 1, duration: 0.58 }, 0.42)
+        .to(".shoe-bg-night", { opacity: 1, duration: 1.05 }, 1.7)
+        .to(".shoe-story-copy", { y: -34, opacity: 0, duration: 0.5 }, 1.72)
+        .fromTo(".shoe-story-finale", { y: 40, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.65 }, 2.08)
+        .fromTo(".shoe-story-progress i", { scaleX: 0 }, { scaleX: 1, ease: "none", duration: 3.25 }, 0);
     }, section);
     return () => context.revert();
   }, []);
@@ -71,21 +90,24 @@ export function ShoeScrollStory() {
       queueMicrotask(() => setFailed(true));
       return;
     }
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.6));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.18;
+    renderer.toneMappingExposure = 0.94;
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 100);
-    camera.position.set(0, 0.12, 4.15);
-    scene.add(new THREE.HemisphereLight(0xfff8de, 0x172a46, 3.1));
-    const key = new THREE.DirectionalLight(0xffffff, 5.2);
+    camera.position.set(0, 0.1, 4.05);
+    scene.add(new THREE.HemisphereLight(0xe9f8ff, 0x10172f, 2.8));
+    const key = new THREE.DirectionalLight(0xfff2e6, 4.8);
     key.position.set(4, 5, 5);
     scene.add(key);
-    const rim = new THREE.DirectionalLight(0xff765f, 3.5);
+    const rim = new THREE.DirectionalLight(0xff6076, 4.2);
     rim.position.set(-4, 1, -3);
     scene.add(rim);
+    const fill = new THREE.DirectionalLight(0x7fdcff, 3.3);
+    fill.position.set(-3, -1, 4);
+    scene.add(fill);
 
     const pivot = new THREE.Group();
     scene.add(pivot);
@@ -94,22 +116,26 @@ export function ShoeScrollStory() {
 
     const loader = new GLTFLoader();
     loader.setMeshoptDecoder(MeshoptDecoder);
-    loader.load("/models/dania-shoe.glb", (gltf) => {
+    loader.load("/models/dania-shoe.glb", async (gltf) => {
       const shoe = gltf.scene;
+      const streetMaterial = await gltf.parser.getDependency("material", 2) as THREE.Material;
       const box = new THREE.Box3().setFromObject(shoe);
       const size = box.getSize(new THREE.Vector3());
       const center = box.getCenter(new THREE.Vector3());
       shoe.position.sub(center);
-      shoe.scale.setScalar(2.65 / Math.max(size.x, size.y, size.z));
-      shoe.rotation.set(-0.1, 0, 0.08);
+      shoe.scale.setScalar(2.85 / Math.max(size.x, size.y, size.z));
+      shoe.scale.y *= 1.12;
+      shoe.rotation.set(-0.08, 0, 0.06);
       shoe.traverse((object) => {
         if (!(object instanceof THREE.Mesh)) return;
         object.castShadow = false;
         object.receiveShadow = false;
+        object.material = streetMaterial;
         const materials = Array.isArray(object.material) ? object.material : [object.material];
         materials.forEach((material) => {
           if (material instanceof THREE.MeshStandardMaterial) {
-            material.envMapIntensity = 1.25;
+            material.envMapIntensity = 0.72;
+            material.roughness = Math.max(material.roughness, 0.42);
             material.needsUpdate = true;
           }
         });
@@ -159,25 +185,31 @@ export function ShoeScrollStory() {
   return (
     <section ref={sectionRef} className="shoe-story" aria-labelledby="shoe-story-title">
       <div className="shoe-story-sticky">
-        <div className="shoe-story-bg shoe-bg-sun" />
-        <div className="shoe-story-bg shoe-bg-sky" />
-        <div className="shoe-story-bg shoe-bg-navy" />
-        <div className="shoe-orbit" aria-hidden="true" />
+        <div className="shoe-story-bg shoe-bg-pearl" />
+        <div className="shoe-story-bg shoe-bg-iris" />
+        <div className="shoe-story-bg shoe-bg-night" />
+        <div className="shoe-story-entry" aria-hidden="true">
+          <span className="shoe-parallax-word shoe-parallax-word--one">MOVE</span>
+          <span className="shoe-parallax-word shoe-parallax-word--two">PLAY</span>
+        </div>
+        <div className="shoe-orbit" aria-hidden="true"><i /><b /></div>
         <div className={`shoe-canvas-wrap${loaded || failed ? " is-loaded" : ""}${failed ? " is-fallback" : ""}`}>
           <canvas ref={canvasRef} aria-label="مدل سه‌بعدی کفش کودک که با اسکرول می‌چرخد" />
           {failed && <span className="shoe-fallback" role="img" aria-label="کتانی آبی کودک" />}
           {!loaded && !failed && <span className="shoe-loading">در حال آماده‌سازی سه‌بعدی…</span>}
         </div>
         <div className="shoe-story-copy">
-          <span>۳۶۰ درجه آزادی</span>
-          <h2 id="shoe-story-title">هر زاویه،<br/><em>برای بازی ساخته شده.</em></h2>
-          <p>آرام اسکرول کن و کفش را از هر طرف ببین.</p>
+          <span>جزئیات از نزدیک</span>
+          <h2 id="shoe-story-title">وزن کم.<br/><em>انعطاف بیشتر.</em></h2>
+          <p>اسکرول کن تا کفش بچرخد.</p>
         </div>
-        <div className="shoe-story-finale" aria-hidden="true">
-          <span>سبک روی پا</span>
-          <strong>بزرگ در خیال</strong>
+        <div className="shoe-story-finale">
+          <span>مدل بعدی</span>
+          <strong>کفش مناسبش را پیدا کن.</strong>
+          <Link href="/shop">دیدن کفش‌ها <ArrowLeftIcon /></Link>
         </div>
-        <span className="shoe-scroll-rail" aria-hidden="true"><i /> SCROLL TO SPIN</span>
+        <span className="shoe-scroll-rail" aria-hidden="true"><i /> SCROLL / SPIN</span>
+        <span className="shoe-story-progress" aria-hidden="true"><i /></span>
         <small className="shoe-credit">3D model © Shopify · CC BY 4.0</small>
       </div>
     </section>

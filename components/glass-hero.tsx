@@ -46,8 +46,8 @@ export function GlassHero() {
         animate={ready ? { opacity: 1, y: 0 } : { opacity: 0, y: 22 }}
         transition={{ ...reveal, delay: reduceMotion ? 0 : 0.24 }}
       >
-        <span className="hero-overline">کفش بچه‌گانه دانیا</span>
-        <h1 id="home-hero-title">برای پاهایی که تازه دارن دنیا رو کشف می‌کنن.</h1>
+        <span className="hero-overline">کفش کودک دانیا</span>
+        <h1 id="home-hero-title">پاهاشون راحت؛<br />خیال‌تون راحت.</h1>
         <div className="dania-hero-actions">
           <Link href="/shop" className="hero-shop-button">
             <span>دیدن کفش‌ها</span>
