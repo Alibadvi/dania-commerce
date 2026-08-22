@@ -75,9 +75,14 @@ export function SiteLoader({ onComplete }: { onComplete: () => void }) {
             ))}
           </div>
 
-          <div className="loader-logo">
-            <DaniaWordmark animated />
-          </div>
+          <motion.div
+            className="loader-logo"
+            initial={reduceMotion ? false : { opacity: 0, y: 12, scale: 0.97, filter: "blur(9px)" }}
+            animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
+            transition={{ delay: reduceMotion ? 0 : 1.02, duration: reduceMotion ? 0.1 : 0.7, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <DaniaWordmark />
+          </motion.div>
 
           <div className="loader-status" aria-hidden="true">
             <span>دنیای شادِ پاهای کوچک</span>
