@@ -1,5 +1,6 @@
 FROM node:22-alpine AS build
 WORKDIR /app
+ENV SITES_BUILD_TIMEOUT=8m
 RUN apk add --no-cache bash coreutils
 COPY package.json package-lock.json ./
 RUN npm ci

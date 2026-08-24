@@ -136,10 +136,6 @@ export function CatalogPage({
     };
   }, [filtersOpen]);
 
-  useEffect(() => {
-    setCategory(validCategory(initialCategory));
-  }, [initialCategory]);
-
   const changeCategory = (nextCategory: CategoryKey) => {
     setCategory(nextCategory);
     setFiltersOpen(false);

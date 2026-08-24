@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { presentationForSlug } from "@/lib/catalog";
 import { rialToToman } from "@/lib/vendure";
+import { vendureShopApiUrl } from "@/lib/commerce-endpoint";
 import { splitFullName, validateCheckoutInput, validateCustomerAddressInput, validateCustomerProfileInput, validateEntityId, validateLoginInput, validatePasswordChangeInput, validateQuantity, validateRegisterInput, ValidationError } from "@/lib/checkout-validation";
 import type { CartOrder, CheckoutResult, CommerceErrorPayload, CustomerAccount, CustomerAddress, CustomerDashboard, CustomerOrder, ShippingMethod } from "@/lib/commerce-types";
 
@@ -79,15 +80,9 @@ class VendureSession {
   private readonly endpoint: string;
 
   constructor(private readonly request: NextRequest) {
-    const endpoint = process.env.VENDURE_SHOP_API_URL?.trim();
+    const endpoint = vendureShopApiUrl();
     if (!endpoint) throw new CommerceError("COMMERCE_UNAVAILABLE", "سرویس فروشگاه هنوز به این محیط متصل نشده است.", 503);
-    try {
-      const url = new URL(endpoint);
-      if (url.protocol !== "http:" && url.protocol !== "https:") throw new Error("Unsupported protocol");
-      this.endpoint = url.toString();
-    } catch {
-      throw new CommerceError("INVALID_COMMERCE_URL", "نشانی سرویس فروشگاه معتبر نیست.", 500);
-    }
+    this.endpoint = endpoint;
     const savedToken = request.cookies.get(SESSION_COOKIE)?.value;
     if (savedToken && savedToken.length <= 2048) this.token = savedToken;
   }
@@ -137,12 +132,16 @@ class VendureSession {
 
   json<T>(value: T, status = 200): NextResponse<T> {
     const response = NextResponse.json(value, { status });
+    const secureCookie =
+      process.env.APP_ENV === "production" ||
+      process.env.APP_ENV === "demo" ||
+      this.request.nextUrl.protocol === "https:";
     response.headers.set("cache-control", "no-store, max-age=0");
     if (this.tokenChanged && this.token) {
       response.cookies.set(SESSION_COOKIE, this.token, {
         httpOnly: true,
         sameSite: "lax",
-        secure: process.env.APP_ENV === "production" || this.request.nextUrl.protocol === "https:",
+        secure: secureCookie,
         path: "/",
         maxAge: 60 * 60 * 24 * 30,
       });
@@ -150,7 +149,7 @@ class VendureSession {
       response.cookies.set(SESSION_COOKIE, "", {
         httpOnly: true,
         sameSite: "lax",
-        secure: process.env.APP_ENV === "production" || this.request.nextUrl.protocol === "https:",
+        secure: secureCookie,
         path: "/",
         maxAge: 0,
       });

@@ -1,0 +1,92 @@
+databases:
+  - name: dania-postgres-demo
+    plan: free
+    region: frankfurt
+    postgresMajorVersion: "17"
+    databaseName: dania_demo
+    user: dania
+    ipAllowList: []
+
+services:
+  - type: web
+    name: dania-vendure-alibadvi
+    runtime: docker
+    plan: free
+    region: frankfurt
+    repo: https://github.com/Alibadvi/dania-commerce
+    branch: main
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: .
+    dockerCommand: /bin/sh -c "node dist/seed.js && node dist/index.js"
+    healthCheckPath: /health
+    autoDeployTrigger: checksPass
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: APP_ENV
+        value: demo
+      - key: APP_ORIGINS
+        value: https://dania-storefront-alibadvi.onrender.com
+      - key: DB_HOST
+        fromDatabase:
+          name: dania-postgres-demo
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: dania-postgres-demo
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: dania-postgres-demo
+          property: database
+      - key: DB_USERNAME
+        fromDatabase:
+          name: dania-postgres-demo
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: dania-postgres-demo
+          property: password
+      - key: DB_SYNCHRONIZE
+        value: "true"
+      - key: COOKIE_SECRET
+        generateValue: true
+      - key: SUPERADMIN_USERNAME
+        value: superadmin
+      - key: SUPERADMIN_PASSWORD
+        sync: false
+      - key: ALLOW_DUMMY_PAYMENTS
+        value: "true"
+      - key: RUN_WORKER_IN_PROCESS
+        value: "true"
+      - key: RESTORE_DEMO_ASSETS
+        value: "true"
+      - key: ASSET_UPLOAD_DIR
+        value: /app/static/assets
+      - key: IMPORT_ASSETS_DIR
+        value: /app/import-assets
+      - key: SEED_PRODUCTS_CSV
+        value: /app/seed-data/products.csv
+
+  - type: web
+    name: dania-storefront-alibadvi
+    runtime: docker
+    plan: free
+    region: frankfurt
+    repo: https://github.com/Alibadvi/dania-commerce
+    branch: main
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /
+    autoDeployTrigger: checksPass
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: APP_ENV
+        value: demo
+      - key: ALLOW_DUMMY_PAYMENTS
+        value: "true"
+      - key: NEXT_PUBLIC_SITE_URL
+        value: https://dania-storefront-alibadvi.onrender.com
+      - key: VENDURE_SHOP_API_URL
+        value: https://dania-vendure-alibadvi.onrender.com/shop-api

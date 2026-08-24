@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { CSSProperties } from "react";
 import type { Product } from "@/lib/catalog";
 
@@ -27,13 +27,8 @@ export function ProductVisual({
   alt,
 }: ProductVisualProps) {
   const source = product.imageUrl?.trim() || "";
-  const [failed, setFailed] = useState(false);
-
-  useEffect(() => {
-    setFailed(false);
-  }, [source]);
-
-  const showRealImage = Boolean(source) && !failed;
+  const [failedSource, setFailedSource] = useState<string | null>(null);
+  const showRealImage = Boolean(source) && failedSource !== source;
 
   return (
     <div
@@ -43,11 +38,14 @@ export function ProductVisual({
       aria-label={alt ?? product.name}
     >
       {showRealImage ? (
+        // Product assets may come from the separately-hosted Vendure service, so a
+        // plain image avoids coupling the storefront to a second image optimizer.
+        // eslint-disable-next-line @next/next/no-img-element
         <img
           src={source}
           alt=""
           draggable={false}
-          onError={() => setFailed(true)}
+          onError={() => setFailedSource(source)}
           className={`absolute inset-0 h-full w-full select-none object-contain ${imageClassName}`}
         />
       ) : (

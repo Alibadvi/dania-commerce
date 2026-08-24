@@ -5,6 +5,7 @@ import { useState } from "react";
 import type { Product } from "@/lib/catalog";
 import { formatPrice } from "@/lib/catalog";
 import { HeartIcon } from "@/components/icons";
+import { ProductVisual } from "@/components/product-visual";
 import { useShop } from "@/components/shop-shell";
 
 type ProductCardProps = {
@@ -59,9 +60,11 @@ export function ProductCard({ product, variant = "default" }: ProductCardProps) 
         <div className="relative aspect-[4/4.2] overflow-hidden rounded-[1.7rem] bg-[#fffaf4]">
           <Link
             href={`/product/${product.slug}`}
-            className={`product-image ${product.imagePosition} !absolute !inset-0 !z-0 !block transition duration-700 ease-[cubic-bezier(.16,1,.3,1)] group-hover:scale-[1.04] group-focus-within:scale-[1.04]`}
+            className="absolute inset-0 z-0 block transition duration-700 ease-[cubic-bezier(.16,1,.3,1)] group-hover:scale-[1.04] group-focus-within:scale-[1.04]"
             aria-label={product.name}
-          />
+          >
+            <ProductVisual product={product} className="h-full w-full" />
+          </Link>
 
           {product.badge && (
             <span className="absolute right-4 top-4 z-10 rounded-full border border-[#122844]/10 bg-white/85 px-3 py-2 text-[9px] font-black text-[#122844] shadow-sm backdrop-blur-md">
@@ -181,13 +184,18 @@ export function ProductCard({ product, variant = "default" }: ProductCardProps) 
   }
 
   return (
-    <article className="product-card">
+    <article className="product-card group">
       <div className="product-media">
         <Link
           href={`/product/${product.slug}`}
-          className={`product-image ${product.imagePosition}`}
+          className="absolute inset-0 block"
           aria-label={product.name}
-        />
+        >
+          <ProductVisual
+            product={product}
+            className="h-full w-full transition-transform duration-500 group-hover:scale-[1.04]"
+          />
+        </Link>
         {product.badge && <span className="product-badge">{product.badge}</span>}
         <button
           type="button"

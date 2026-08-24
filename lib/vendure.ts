@@ -1,4 +1,5 @@
 import { presentationForSlug, products as fallbackProducts, type Product, type ProductCategory } from "@/lib/catalog";
+import { vendureShopApiUrl } from "@/lib/commerce-endpoint";
 
 type VendureVariant = {
   id: string;
@@ -44,20 +45,8 @@ const PRODUCT_QUERY = `query DanyaProduct($slug: String!) {
   }
 }`;
 
-function shopApiUrl(): string | undefined {
-  const value = process.env.VENDURE_SHOP_API_URL?.trim();
-  if (!value) return undefined;
-  try {
-    const url = new URL(value);
-    if (url.protocol !== "http:" && url.protocol !== "https:") return undefined;
-    return url.toString();
-  } catch {
-    return undefined;
-  }
-}
-
 async function storefrontRequest<T>(query: string, variables: Record<string, unknown> = {}): Promise<T | null> {
-  const endpoint = shopApiUrl();
+  const endpoint = vendureShopApiUrl();
   if (!endpoint) return null;
   try {
     const response = await fetch(endpoint, {
@@ -94,6 +83,10 @@ export function rialToToman(value: number): number {
 
 function mapProduct(product: VendureProduct, index = 0): Product {
   const presentation = presentationForSlug(product.slug) ?? fallbackProducts[index % fallbackProducts.length];
+  const featuredAsset = product.featuredAsset?.preview?.trim();
+  const imageUrl = featuredAsset?.includes("danya-catalog-grid")
+    ? presentation?.imageUrl
+    : featuredAsset ?? presentation?.imageUrl;
   const variants = product.variants
     .map((variant, variantIndex) => ({
       id: variant.id,
@@ -117,7 +110,7 @@ function mapProduct(product: VendureProduct, index = 0): Product {
     price: firstVariant?.price ?? presentation?.price ?? 0,
     sizes: availableVariants.map((variant) => variant.size),
     variants: availableVariants,
-    imageUrl: product.featuredAsset?.preview ?? presentation?.imageUrl,
+    imageUrl,
   };
 }
 

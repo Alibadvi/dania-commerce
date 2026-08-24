@@ -1,6 +1,8 @@
 import "dotenv/config";
+import { promises as fs } from "node:fs";
 import path from "node:path";
 import {
+  Asset,
   bootstrapWorker,
   ChannelService,
   ConfigService,
@@ -32,6 +34,36 @@ const seedProductSlugs = [
   "aftab-yellow",
 ] as const;
 const seedVariantCount = 44;
+
+async function restoreDemoAssets(app: Awaited<ReturnType<typeof bootstrapWorker>>["app"]) {
+  if (process.env.RESTORE_DEMO_ASSETS !== "true") return;
+
+  const uploadDir = path.resolve(process.env.ASSET_UPLOAD_DIR ?? path.join(process.cwd(), "static/assets"));
+  const importDir = path.resolve(process.env.IMPORT_ASSETS_DIR ?? path.join(process.cwd(), "import-assets"));
+  const seedImage = path.join(importDir, "danya-catalog-grid.png");
+  await fs.access(seedImage);
+
+  const assets = await app.get(TransactionalConnection).getRepository(Asset).find();
+  const relativePaths = new Set(
+      assets
+        .flatMap((asset) => [asset.source, asset.preview])
+        .filter(
+          (value): value is string =>
+            typeof value === "string" && value.includes("danya-catalog-grid"),
+        ),
+  );
+
+  for (const relativePath of relativePaths) {
+    const target = path.resolve(uploadDir, relativePath);
+    if (!target.startsWith(`${uploadDir}${path.sep}`)) continue;
+    try {
+      await fs.access(target);
+    } catch {
+      await fs.mkdir(path.dirname(target), { recursive: true });
+      await fs.copyFile(seedImage, target);
+    }
+  }
+}
 
 const initialData: InitialData = {
   defaultLanguage: LanguageCode.fa,
@@ -191,6 +223,7 @@ async function seed() {
       }
       await app.get(SearchService).reindex(ctx);
     }
+    await restoreDemoAssets(app);
     await makeSizeGroupNamesClear(app, ctx);
     await populateCollections(app, initialData, channel);
     console.log("Danya seed complete: Persian/IRR channel, Iran zone, shipping, local payment and catalog are ready.");

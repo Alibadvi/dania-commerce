@@ -52,19 +52,35 @@ export function CheckoutPage() {
   useEffect(() => {
     if (!cart.length) return;
     let cancelled = false;
-    setLoadingShipping(true);
-    fetch("/api/commerce?resource=shipping", { credentials: "same-origin", cache: "no-store" })
-      .then(async (response) => {
+
+    const loadShippingMethods = async () => {
+      await Promise.resolve();
+      if (cancelled) return;
+      setLoadingShipping(true);
+      try {
+        const response = await fetch("/api/commerce?resource=shipping", {
+          credentials: "same-origin",
+          cache: "no-store",
+        });
         const payload = await response.json() as ShippingResponse;
         if (!response.ok) throw new Error(payload.error?.message ?? "روش‌های ارسال دریافت نشد.");
+        if (cancelled) return;
+
+        const methods = payload.methods ?? [];
+        setShippingMethods(methods);
+        setShippingMethodId((current) =>
+          current && methods.some((item) => item.id === current) ? current : methods[0]?.id ?? "",
+        );
+      } catch (reason) {
         if (!cancelled) {
-          const methods = payload.methods ?? [];
-          setShippingMethods(methods);
-          setShippingMethodId((current) => current && methods.some((item) => item.id === current) ? current : methods[0]?.id ?? "");
+          setError(reason instanceof Error ? reason.message : "روش‌های ارسال دریافت نشد.");
         }
-      })
-      .catch((reason: unknown) => { if (!cancelled) setError(reason instanceof Error ? reason.message : "روش‌های ارسال دریافت نشد."); })
-      .finally(() => { if (!cancelled) setLoadingShipping(false); });
+      } finally {
+        if (!cancelled) setLoadingShipping(false);
+      }
+    };
+
+    void loadShippingMethods();
     return () => { cancelled = true; };
   }, [cart.length, order?.subTotal]);
 

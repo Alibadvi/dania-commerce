@@ -120,12 +120,13 @@ export function ShopShell({ children, catalog }: { children: ReactNode; catalog:
   }, []);
 
   useEffect(() => {
-    void refreshCustomer();
+    const initialRefresh = window.setTimeout(() => void refreshCustomer(), 0);
     const syncCustomer = () => void refreshCustomer();
     window.addEventListener(CUSTOMER_CHANGED_EVENT, syncCustomer);
     window.addEventListener("pageshow", syncCustomer);
     window.addEventListener("focus", syncCustomer);
     return () => {
+      window.clearTimeout(initialRefresh);
       window.removeEventListener(CUSTOMER_CHANGED_EVENT, syncCustomer);
       window.removeEventListener("pageshow", syncCustomer);
       window.removeEventListener("focus", syncCustomer);

@@ -22,29 +22,33 @@ import { danyaStandardShippingCalculator } from "./shipping.js";
 const rootDir = process.cwd();
 const port = Number(process.env.PORT ?? 3000);
 const isProduction = process.env.APP_ENV === "production";
+const isPublicEnvironment = isProduction || process.env.APP_ENV === "demo";
 const allowedOrigins = (process.env.APP_ORIGINS ?? process.env.APP_ORIGIN ?? "http://localhost:3001")
   .split(",")
   .map((origin) => origin.trim())
   .filter(Boolean);
 const assetUploadDir = path.resolve(process.env.ASSET_UPLOAD_DIR ?? path.join(rootDir, "static/assets"));
 const storefrontOrigin = allowedOrigins[0] ?? "http://localhost:3001";
+const renderHostname = process.env.RENDER_EXTERNAL_HOSTNAME?.trim();
+const assetUrlPrefix = process.env.ASSET_URL_PREFIX
+  ?? (renderHostname ? `https://${renderHostname}/assets/` : `http://localhost:${port}/assets/`);
 
-function requireProductionSecret(name: string, minimumLength: number): string {
+function requireEnvironmentSecret(name: string, minimumLength: number): string {
   const value = process.env[name] ?? "";
-  if (isProduction && (value.length < minimumLength || /replace|change|superadmin/i.test(value))) {
-    throw new Error(`${name} must be a non-default secret of at least ${minimumLength} characters in production`);
+  if (isPublicEnvironment && (value.length < minimumLength || /replace|change|superadmin/i.test(value))) {
+    throw new Error(`${name} must be a non-default secret of at least ${minimumLength} characters in a public environment`);
   }
   return value;
 }
 
-const cookieSecret = requireProductionSecret("COOKIE_SECRET", 32) || "danya-local-cookie-secret-change-before-production";
-const superadminPassword = requireProductionSecret("SUPERADMIN_PASSWORD", 16) || "danya-local-admin-password";
+const cookieSecret = requireEnvironmentSecret("COOKIE_SECRET", 32) || "danya-local-cookie-secret-change-before-production";
+const superadminPassword = requireEnvironmentSecret("SUPERADMIN_PASSWORD", 16) || "danya-local-admin-password";
 const smtpHost = process.env.SMTP_HOST ?? "";
 const smtpUser = process.env.SMTP_USER ?? "";
 
 for (const origin of allowedOrigins) {
   const url = new URL(origin);
-  if (isProduction && url.protocol !== "https:") throw new Error("APP_ORIGINS must contain HTTPS origins in production");
+  if (isPublicEnvironment && url.protocol !== "https:") throw new Error("APP_ORIGINS must contain HTTPS origins in a public environment");
 }
 if (isProduction && (!smtpHost || !smtpUser)) throw new Error("SMTP_HOST and SMTP_USER are required in production");
 if (isProduction && process.env.DB_SYNCHRONIZE === "true") throw new Error("DB_SYNCHRONIZE must be false in production; run reviewed migrations instead");
@@ -59,7 +63,7 @@ const emailPlugin = isProduction
         host: smtpHost,
         port: Number(process.env.SMTP_PORT ?? 587),
         secure: process.env.SMTP_SECURE === "true",
-        auth: { user: smtpUser, pass: requireProductionSecret("SMTP_PASSWORD", 8) },
+        auth: { user: smtpUser, pass: requireEnvironmentSecret("SMTP_PASSWORD", 8) },
       },
       globalTemplateVars: {
         fromAddress: process.env.EMAIL_FROM ?? "Danya <no-reply@dania.ir>",
@@ -68,7 +72,19 @@ const emailPlugin = isProduction
         changeEmailAddressUrl: `${storefrontOrigin}/account/verify-email-change`,
       },
     })
-  : EmailPlugin.init({
+  : isPublicEnvironment
+    ? EmailPlugin.init({
+        transport: { type: "none" },
+        handlers: defaultEmailHandlers,
+        templateLoader: new FileBasedTemplateLoader(path.join(rootDir, "node_modules/@vendure/email-plugin/templates")),
+        globalTemplateVars: {
+          fromAddress: "Danya Demo <no-reply@localhost>",
+          verifyEmailAddressUrl: `${storefrontOrigin}/account/verify`,
+          passwordResetUrl: `${storefrontOrigin}/account/reset-password`,
+          changeEmailAddressUrl: `${storefrontOrigin}/account/verify-email-change`,
+        },
+      })
+    : EmailPlugin.init({
       devMode: true,
       route: "mailbox",
       outputPath: path.join(rootDir, "static/mailbox"),
@@ -88,11 +104,11 @@ export const config: VendureConfig = {
     port,
     adminApiPath: "admin-api",
     shopApiPath: "shop-api",
-    trustProxy: isProduction ? 1 : false,
-    adminApiPlayground: !isProduction,
-    adminApiDebug: !isProduction,
-    shopApiPlayground: !isProduction,
-    shopApiDebug: !isProduction,
+    trustProxy: isPublicEnvironment ? 1 : false,
+    adminApiPlayground: !isPublicEnvironment,
+    adminApiDebug: !isPublicEnvironment,
+    shopApiPlayground: !isPublicEnvironment,
+    shopApiDebug: !isPublicEnvironment,
     cors: {
       origin: allowedOrigins,
       credentials: true,
@@ -103,7 +119,7 @@ export const config: VendureConfig = {
     cookieOptions: {
       secret: cookieSecret,
       sameSite: "lax",
-      secure: isProduction,
+      secure: isPublicEnvironment,
     },
     superadminCredentials: {
       identifier: process.env.SUPERADMIN_USERNAME ?? "superadmin",
@@ -139,7 +155,7 @@ export const config: VendureConfig = {
     AssetServerPlugin.init({
       route: "assets",
       assetUploadDir,
-      assetUrlPrefix: process.env.ASSET_URL_PREFIX ?? `http://localhost:${port}/assets/`,
+      assetUrlPrefix,
     }),
     DefaultJobQueuePlugin.init({ useDatabaseForBuffer: true }),
     DefaultSchedulerPlugin.init(),
@@ -147,6 +163,6 @@ export const config: VendureConfig = {
     DanyaDashboardPlugin,
     DashboardPlugin.init({ route: "dashboard", appDir: path.join(rootDir, "dist/dashboard") }),
     emailPlugin,
-    ...(isProduction ? [HardenPlugin.init({ maxQueryComplexity: 650, apiMode: "prod" })] : []),
+    ...(isPublicEnvironment ? [HardenPlugin.init({ maxQueryComplexity: 650, apiMode: "prod" })] : []),
   ],
 };
