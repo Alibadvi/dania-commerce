@@ -25,7 +25,7 @@ export function SiteLoader({ onComplete, mode = "initial" }: { onComplete: () =>
   useEffect(() => {
     previousOverflow.current = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    const timer = window.setTimeout(() => setVisible(false), reduceMotion ? 300 : isRouteTransition ? 980 : 2700);
+    const timer = window.setTimeout(() => setVisible(false), reduceMotion ? 200 : isRouteTransition ? 450 : 1200);
     return () => window.clearTimeout(timer);
   }, [isRouteTransition, reduceMotion]);
 
