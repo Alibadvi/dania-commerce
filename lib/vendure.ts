@@ -25,6 +25,18 @@ type GraphQLResponse<T> = {
   errors?: Array<{ message: string }>;
 };
 
+const LIVE_CACHE_MS = 60_000;
+const FALLBACK_CACHE_MS = 5_000;
+
+type TimedValue<T> = { value: T; expiresAt: number };
+
+let catalogCache: TimedValue<Product[]> | null = null;
+const productCache = new Map<string, TimedValue<Product>>();
+
+function fresh<T>(entry: TimedValue<T> | null | undefined): entry is TimedValue<T> {
+  return Boolean(entry && entry.expiresAt > Date.now());
+}
+
 const PRODUCTS_QUERY = `query DanyaProducts {
   products(options: { take: 100, sort: { name: ASC } }) {
     items {
@@ -115,16 +127,35 @@ function mapProduct(product: VendureProduct, index = 0): Product {
 }
 
 export async function fetchVendureProducts(): Promise<Product[]> {
+  if (fresh(catalogCache)) return catalogCache.value;
+
   const data = await storefrontRequest<{ products: { items: VendureProduct[] } }>(PRODUCTS_QUERY);
   const items = data?.products.items ?? [];
-  return items.length ? items.map(mapProduct) : fallbackProducts;
+  const value = items.length ? items.map(mapProduct) : fallbackProducts;
+  const expiresAt = Date.now() + (items.length ? LIVE_CACHE_MS : FALLBACK_CACHE_MS);
+
+  catalogCache = { value, expiresAt };
+  value.forEach((product) => productCache.set(product.slug, { value: product, expiresAt }));
+  return value;
 }
 
 export async function fetchVendureProduct(slug: string): Promise<Product | undefined> {
   const safeSlug = slug.trim().slice(0, 128);
+  const cached = productCache.get(safeSlug);
+  if (fresh(cached)) return cached.value;
+
   const data = await storefrontRequest<{ product: VendureProduct | null }>(PRODUCT_QUERY, { slug: safeSlug });
-  if (data?.product) return mapProduct(data.product);
-  return fallbackProducts.find((product) => product.slug === safeSlug);
+  const value = data?.product
+    ? mapProduct(data.product)
+    : fallbackProducts.find((product) => product.slug === safeSlug);
+
+  if (value) {
+    productCache.set(safeSlug, {
+      value,
+      expiresAt: Date.now() + (data?.product ? LIVE_CACHE_MS : FALLBACK_CACHE_MS),
+    });
+  }
+  return value;
 }
 
 export function isFallbackCatalog(catalog: Product[]): boolean {
