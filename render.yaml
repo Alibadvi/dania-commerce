@@ -17,7 +17,6 @@ services:
     branch: main
     dockerfilePath: ./backend/Dockerfile
     dockerContext: .
-    dockerCommand: /bin/sh -c "node dist/seed.js && node dist/index.js"
     healthCheckPath: /health
     autoDeployTrigger: checksPass
     envVars:

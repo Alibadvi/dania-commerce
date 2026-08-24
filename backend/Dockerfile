@@ -18,4 +18,4 @@ COPY --from=build /app/seed-data ./seed-data
 COPY --from=build /app/import-assets ./import-assets
 RUN mkdir -p /app/static/assets
 EXPOSE 3000
-CMD ["node", "dist/index.js"]
+CMD ["/bin/sh", "-c", "node dist/seed.js && exec node dist/index.js"]

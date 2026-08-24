@@ -102,6 +102,19 @@ export const config: VendureConfig = {
   defaultLanguageCode: LanguageCode.fa,
   apiOptions: {
     port,
+    middleware: [
+      {
+        route: "/health",
+        handler: (
+          _request: unknown,
+          response: {
+            status: (statusCode: number) => {
+              json: (body: { status: string }) => unknown;
+            };
+          },
+        ) => response.status(200).json({ status: "ok" }),
+      },
+    ],
     adminApiPath: "admin-api",
     shopApiPath: "shop-api",
     trustProxy: isPublicEnvironment ? 1 : false,
