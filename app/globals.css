@@ -1099,7 +1099,8 @@ body { background: var(--paper); }
   .hamburger-glyph i,.close-glyph,.mobile-menu-top,.mobile-member-card,.mobile-menu-actions,.mobile-menu-foot { transition: none !important; }
 }
 
-/* Pearlescent editorial hero — one image, one action{
+/* Pearlescent editorial hero — one image, one action */
+.hero-section {
   padding: 0;
   overflow: hidden;
   background: #e8e6df;
