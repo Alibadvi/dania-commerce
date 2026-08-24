@@ -274,7 +274,12 @@ export function ShopShell({ children, catalog }: { children: ReactNode; catalog:
             <span className="mobile-member-arrow" aria-hidden="true">↙</span>
           </Link>
           <div className="mobile-menu-kicker"><span>COLLECTION</span><b>۰۱ — ۰۴</b></div>
-          <nav onClickCapture={() => setMenuOpen(false)}><Link href="/shop?category=girl"><small>۰۱</small><span><strong>دخترانه</strong><em>رنگ، بازی، حرکت</em></span></Link><Link href="/shop?category=boy"><small>۰۲</small><span><strong>پسرانه</strong><em>سبک برای ماجراجویی</em></span></Link><Link href="/about"><small>۰۳</small><span><strong>درباره ما</strong><em>قصه‌ی قدم‌های کوچک</em></span></Link><Link href="/contact"><small>۰۴</small><span><strong>تماس با ما</strong><em>کنارت هستیم</em></span></Link></nav>
+          <nav>
+            <Link href="/shop?category=girl" prefetch onClick={() => setMenuOpen(false)}><small>۰۱</small><span><strong>دخترانه</strong><em>رنگ، بازی، حرکت</em></span></Link>
+            <Link href="/shop?category=boy" prefetch onClick={() => setMenuOpen(false)}><small>۰۲</small><span><strong>پسرانه</strong><em>سبک برای ماجراجویی</em></span></Link>
+            <Link href="/about" prefetch onClick={() => setMenuOpen(false)}><small>۰۳</small><span><strong>درباره ما</strong><em>قصه‌ی قدم‌های کوچک</em></span></Link>
+            <Link href="/contact" prefetch onClick={() => setMenuOpen(false)}><small>۰۴</small><span><strong>تماس با ما</strong><em>کنارت هستیم</em></span></Link>
+          </nav>
           <div className="mobile-menu-actions"><button onClick={() => { setMenuOpen(false); setCartOpen(true); }}><span className="mobile-cart-icon"><BagIcon /></span><span><small>سبد دانیا</small><strong>{value.cartCount ? `${value.cartCount.toLocaleString("fa-IR")} انتخاب برای کوچولوت` : "هنوز منتظر اولین انتخابه"}</strong></span><b>{value.cartCount.toLocaleString("fa-IR")}</b></button></div>
           <p className="mobile-menu-foot"><span>DANIA KIDS</span><b>برای حرکت آزاد</b></p>
         </div>
