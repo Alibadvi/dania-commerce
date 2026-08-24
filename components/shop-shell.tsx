@@ -72,7 +72,6 @@ export function ShopShell({ children, catalog }: { children: ReactNode; catalog:
   const [cartOpen, setCartOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [introReady, setIntroReady] = useState(false);
-  const [routeLoaderKey, setRouteLoaderKey] = useState(0);
   const [customer, setCustomer] = useState<CustomerAccount | null>(null);
   const [scrolled, setScrolled] = useState(false);
   const reduceMotion = useReducedMotion();
@@ -141,27 +140,6 @@ export function ShopShell({ children, catalog }: { children: ReactNode; catalog:
   }, []);
 
   useEffect(() => {
-    const beginRouteTransition = (event: MouseEvent) => {
-      if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-      const target = event.target;
-      if (!(target instanceof Element)) return;
-      const anchor = target.closest<HTMLAnchorElement>("a[href]");
-      if (!anchor || anchor.target === "_blank" || anchor.hasAttribute("download") || anchor.dataset.loader === "false") return;
-
-      const destination = new URL(anchor.href, window.location.href);
-      if (destination.origin !== window.location.origin) return;
-      const current = new URL(window.location.href);
-      const sameDocument = destination.pathname === current.pathname && destination.search === current.search;
-      if (sameDocument) return;
-
-      setRouteLoaderKey((key) => key + 1);
-    };
-
-    document.addEventListener("click", beginRouteTransition, true);
-    return () => document.removeEventListener("click", beginRouteTransition, true);
-  }, []);
-
-  useEffect(() => {
     if (!menuOpen) return;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -221,13 +199,6 @@ export function ShopShell({ children, catalog }: { children: ReactNode; catalog:
     <ShopContext.Provider value={value}>
       <IntroProvider ready={introReady}>
       <SiteLoader onComplete={() => setIntroReady(true)} />
-      {routeLoaderKey > 0 && (
-        <SiteLoader
-          key={routeLoaderKey}
-          mode="route"
-          onComplete={() => setRouteLoaderKey(0)}
-        />
-      )}
       <motion.header
         className={`pointer-events-none sticky top-0 z-[80] border-0 transition-[background-color,box-shadow,backdrop-filter] duration-300 max-[980px]:bg-[rgba(251,248,241,.82)] max-[980px]:shadow-[0_1px_0_rgba(23,42,70,.08)] max-[980px]:backdrop-blur-2xl ${scrolled ? "bg-[rgba(251,248,241,.88)] shadow-[0_1px_0_rgba(23,42,70,.1)] backdrop-blur-2xl" : "bg-transparent"}`}
         initial={{ y: reduceMotion ? 0 : "-110%", opacity: reduceMotion ? 1 : 0 }}
