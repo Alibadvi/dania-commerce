@@ -1,9 +1,20 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { ArrowLeftIcon, RefreshIcon, ShieldIcon } from "@/components/icons";
+import { AboutStory } from "@/components/about-story";
 
-export const metadata: Metadata = { title: "داستان دانیا", description: "فلسفه طراحی کفش کودک دانیا؛ فرم طبیعی پا، وزن کم و آزادی حرکت.", alternates: { canonical: "/about" } };
+export const metadata: Metadata = {
+  title: "درباره دانیا | کفش کودک برای حرکت آزاد",
+  description:
+    "با فلسفه طراحی دانیا آشنا شوید؛ کفش کودک با پنجه جادار، زیره منعطف و وزن کم برای پاهای درحال رشد.",
+  alternates: { canonical: "/about" },
+  openGraph: {
+    title: "درباره دانیا | کفش کودک برای حرکت آزاد",
+    description:
+      "طراحی کودک‌محور با فرم طبیعی، انعطاف مناسب و وزن کم؛ برای قدم‌هایی که هر روز دنیای تازه‌ای کشف می‌کنند.",
+    url: "/about",
+    type: "website",
+  },
+};
 
 export default function AboutPage() {
-  return <main className="about-page"><section className="about-hero"><div className="container"><div><span className="eyebrow">از یک سؤال ساده شروع شد</span><h1>چرا کفش بچه‌ها<br/><em>مثل خودشان آزاد نیست؟</em></h1><p>دانیا برای ساختن کفشی به دنیا آمد که جلوی بازی را نگیرد؛ سبک باشد، جا برای رشد داشته باشد و هر روز همراه بچه‌ها دوام بیاورد.</p></div><div className="about-art"><div className="about-product-image"/><span>طراحی برای<br/>حرکت آزاد</span></div></div></section><section className="container about-values section"><div className="section-heading"><div><span className="eyebrow">سه اصل غیرقابل مذاکره</span><h2>کمتر، ولی درست‌تر</h2></div></div><div className="values-grid"><article><span>۰۱</span><h3>فرم طبیعی پا</h3><p>پنجه‌های کودک فشرده نمی‌شوند. قالب‌های ما جلوی پا را جادار و پاشنه را ثابت نگه می‌دارند.</p></article><article><span>۰۲</span><h3>سبکی واقعی</h3><p>وزن اضافی یعنی خستگی زودتر. مواد را برای دوام انتخاب می‌کنیم، نه سنگینی.</p></article><article><span>۰۳</span><h3>صداقت در انتخاب</h3><p>راهنمای سایز روشن، امکان تعویض و توضیح واقعی محصول؛ بدون ادعای تزئینی.</p></article></div></section><section className="about-manifesto"><div className="container"><div className="manifesto-number">۱۰۰۰+</div><div><span className="eyebrow">هر بازخورد، یک اصلاح</span><h2>با پای واقعی بچه‌ها تست می‌کنیم.</h2><p>طراحی خوب پشت میز تمام نمی‌شود. حرکت، دویدن، زمین‌خوردن و دوباره بلندشدن بخشی از آزمون هر مدل است.</p><div className="manifesto-icons"><span><RefreshIcon/>اصلاح مداوم قالب</span><span><ShieldIcon/>کنترل کیفیت هر سری</span></div></div></div></section><section className="about-cta section"><div className="container"><span>قدم بعدی آماده است.</span><h2>یک جفت برای ماجراجوی کوچک پیدا کن.</h2><Link href="/shop" className="button primary">دیدن فروشگاه <ArrowLeftIcon/></Link></div></section></main>;
+  return <AboutStory />;
 }

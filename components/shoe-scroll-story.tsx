@@ -1,197 +1,115 @@
 "use client";
 
-import type { Application, SPEObject } from "@splinetool/runtime";
+import Image from "next/image";
 import gsap from "gsap";
-import dynamic from "next/dynamic";
-import Link from "next/link";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowLeftIcon } from "@/components/icons";
+import { useEffect, useRef } from "react";
 
 gsap.registerPlugin(ScrollTrigger);
 
-const SPLINE_SCENE = "https://prod.spline.design/8SpvxCVlElOUYaVL/scene.splinecode";
-const SPLINE_SHOE_NAME = "AirMax";
-const SPLINE_BRAND_OBJECTS = /^(?:Text(?: .*)?|NIkeLogo|NIKE|nike|AIR|MAX|Texty|AirMaxStripey|gum outsole|air-cushioned|In the bustling.*|Designed with precision.*)$/i;
-const SplineScene = dynamic(() => import("@splinetool/react-spline"), { ssr: false });
+const PLAYGROUND_SHOES = [
+  { id: "concept-01", image: "/images/dania-playground/concept-01.webp", name: "Coral Comet", tone: "CORAL / PEARL / CYAN", details: ["AIR MESH", "SOFT BOUNCE"] },
+  { id: "concept-02", image: "/images/dania-playground/concept-02.webp", name: "Sunny Sprint", tone: "NAVY / SUN / CORAL", details: ["EASY STRAPS", "TRAIL GRIP"] },
+  { id: "concept-03", image: "/images/dania-playground/concept-03.webp", name: "Lilac Loop", tone: "LILAC / AQUA / ORANGE", details: ["SOCK FIT", "FLEX SOLE"] },
+] as const;
 
-type TransformSnapshot = {
-  rotation: { x: number; y: number; z: number };
-  scale: { x: number; y: number; z: number };
-};
-
-export function ShoeScrollStory() {
+export function DaniaPlayground() {
   const sectionRef = useRef<HTMLElement>(null);
-  const splineAppRef = useRef<Application | null>(null);
-  const shoeRef = useRef<SPEObject | null>(null);
-  const baseTransformRef = useRef<TransformSnapshot | null>(null);
-  const spinRef = useRef({ value: 0 });
-  const [shouldLoad, setShouldLoad] = useState(false);
-  const [loaded, setLoaded] = useState(false);
-  const [failed, setFailed] = useState(false);
-
-  const handleSplineLoad = useCallback((app: Application) => {
-    splineAppRef.current = app;
-    app.setBackgroundColor("rgba(0, 0, 0, 0)");
-
-    for (const object of app.getAllObjects()) {
-      if (SPLINE_BRAND_OBJECTS.test(object.name.trim())) object.hide();
-    }
-
-    const shoe = app.findObjectByName(SPLINE_SHOE_NAME);
-    if (!shoe) {
-      setFailed(true);
-      return;
-    }
-
-    const viewportScale = window.matchMedia("(max-width: 700px)").matches ? 0.78 : 0.92;
-    shoeRef.current = shoe;
-    baseTransformRef.current = {
-      rotation: { x: shoe.rotation.x, y: shoe.rotation.y, z: shoe.rotation.z },
-      scale: { x: shoe.scale.x, y: shoe.scale.y, z: shoe.scale.z },
-    };
-    shoe.scale.x *= viewportScale;
-    shoe.scale.y *= viewportScale;
-    shoe.scale.z *= viewportScale;
-    setFailed(false);
-    setLoaded(true);
-    window.setTimeout(() => ScrollTrigger.refresh(), 80);
-  }, []);
 
   useEffect(() => {
     const section = sectionRef.current;
     if (!section) return;
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) {
-        setShouldLoad(true);
-        observer.disconnect();
-      }
-    }, { rootMargin: "1600px 0px" });
-    observer.observe(section);
-    return () => observer.disconnect();
-  }, []);
 
-  useEffect(() => {
-    if (!shouldLoad) return;
-    const timeout = window.setTimeout(() => {
-      if (!shoeRef.current) setFailed(true);
-    }, 18000);
-    return () => window.clearTimeout(timeout);
-  }, [shouldLoad]);
-
-  useEffect(() => {
-    let frame = 0;
-    const renderScrollTransform = () => {
-      const shoe = shoeRef.current;
-      const base = baseTransformRef.current;
-      if (shoe && base) {
-        const spin = spinRef.current.value;
-        shoe.rotation.y = base.rotation.y + spin;
-        shoe.rotation.x = base.rotation.x + Math.sin(spin * 0.62) * 0.075;
-        shoe.rotation.z = base.rotation.z + Math.sin(spin * 0.38) * 0.035;
-      }
-      frame = window.requestAnimationFrame(renderScrollTransform);
-    };
-    frame = window.requestAnimationFrame(renderScrollTransform);
-    return () => window.cancelAnimationFrame(frame);
-  }, []);
-
-  useEffect(() => {
-    const section = sectionRef.current;
-    if (!section) return;
-    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const context = gsap.context(() => {
-      if (reduceMotion) return;
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
-      const entrance = gsap.timeline({
-        scrollTrigger: {
-          trigger: section,
-          start: "top 92%",
-          end: "top top",
-          scrub: 1.15,
-          invalidateOnRefresh: true,
-        },
+      gsap.from(".playground-head > *, .playground-shoe", {
+        y: 36,
+        opacity: 0,
+        duration: 0.85,
+        stagger: 0.08,
+        ease: "power3.out",
+        scrollTrigger: { trigger: section, start: "top 78%", once: true },
       });
-      entrance
-        .fromTo(".shoe-story-sticky", { clipPath: "inset(8% 3.5% 0 3.5% round 40px)" }, { clipPath: "inset(0% 0% 0% 0% round 0px)", ease: "none" }, 0)
-        .fromTo(".shoe-parallax-word--one", { xPercent: -18, yPercent: 24 }, { xPercent: 8, yPercent: -5, ease: "none" }, 0)
-        .fromTo(".shoe-parallax-word--two", { xPercent: 16, yPercent: 34 }, { xPercent: -9, yPercent: -3, ease: "none" }, 0)
-        .fromTo(".shoe-canvas-wrap", { "--shoe-y": "18vh", "--shoe-scale": 0.72 }, { "--shoe-y": "0vh", "--shoe-scale": 1, ease: "none" }, 0);
 
-      const timeline = gsap.timeline({
-        scrollTrigger: {
-          trigger: section,
-          start: "top top",
-          end: "bottom bottom",
-          scrub: 0.8,
-          invalidateOnRefresh: true,
-        },
+      gsap.fromTo(".playground-progress i", { scaleX: 0 }, {
+        scaleX: 1,
+        ease: "none",
+        scrollTrigger: { trigger: section, start: "top bottom", end: "bottom top", scrub: 0.5 },
       });
-      timeline
-        .to(spinRef.current, { value: Math.PI * 3.15, ease: "none", duration: 3.5 }, 0)
-        .to(".shoe-fallback", { rotationY: 480, rotationZ: 7, ease: "none", duration: 3.5 }, 0)
-        .to(".shoe-story-entry", { opacity: 0, yPercent: -12, duration: 0.52 }, 0.1)
-        .to(".shoe-bg-iris", { opacity: 1, duration: 0.95 }, 0.32)
-        .fromTo(".shoe-story-copy", { y: 34, opacity: 0 }, { y: 0, opacity: 1, duration: 0.62 }, 0.48)
-        .to(".shoe-bg-night", { opacity: 1, duration: 1.08 }, 1.82)
-        .to(".shoe-story-copy", { y: -28, opacity: 0, duration: 0.46 }, 1.88)
-        .fromTo(".shoe-story-finale", { y: 32, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.62 }, 2.23)
-        .fromTo(".shoe-story-bridge", { clipPath: "inset(100% 0 0 0)" }, { clipPath: "inset(0% 0 0 0)", duration: 0.56, ease: "none" }, 3.04)
-        .fromTo(".shoe-story-progress i", { scaleX: 0 }, { scaleX: 1, ease: "none", duration: 3.5 }, 0);
+
+      const media = gsap.matchMedia();
+      media.add("(min-width: 701px)", () => {
+        gsap.fromTo(".playground-marquee--move", { xPercent: -9 }, {
+          xPercent: 9,
+          ease: "none",
+          scrollTrigger: { trigger: section, start: "top bottom", end: "bottom top", scrub: 0.8 },
+        });
+        gsap.fromTo(".playground-marquee--play", { xPercent: 9 }, {
+          xPercent: -9,
+          ease: "none",
+          scrollTrigger: { trigger: section, start: "top bottom", end: "bottom top", scrub: 0.8 },
+        });
+        gsap.to(".playground-shoe--side-left", {
+          yPercent: -5,
+          ease: "none",
+          scrollTrigger: { trigger: section, start: "top bottom", end: "bottom top", scrub: 0.9 },
+        });
+        gsap.to(".playground-shoe--center", {
+          yPercent: 4,
+          ease: "none",
+          scrollTrigger: { trigger: section, start: "top bottom", end: "bottom top", scrub: 0.9 },
+        });
+        gsap.to(".playground-shoe--side-right", {
+          yPercent: -3,
+          ease: "none",
+          scrollTrigger: { trigger: section, start: "top bottom", end: "bottom top", scrub: 0.9 },
+        });
+      });
     }, section);
+
     return () => context.revert();
   }, []);
 
-  useEffect(() => () => {
-    splineAppRef.current = null;
-    shoeRef.current = null;
-    baseTransformRef.current = null;
-  }, []);
-
   return (
-    <section ref={sectionRef} className="shoe-story" aria-labelledby="shoe-story-title">
-      <div className="shoe-story-sticky">
-        <div className="shoe-story-bg shoe-bg-pearl" />
-        <div className="shoe-story-bg shoe-bg-iris" />
-        <div className="shoe-story-bg shoe-bg-night" />
-        <div className="shoe-story-entry" aria-hidden="true">
-          <span className="shoe-parallax-word shoe-parallax-word--one">MOVE</span>
-          <span className="shoe-parallax-word shoe-parallax-word--two">PLAY</span>
-        </div>
-        <div className="shoe-orbit" aria-hidden="true"><i /><b /></div>
-        <div
-          className={`shoe-canvas-wrap shoe-spline-wrap${loaded || failed ? " is-loaded" : ""}${failed ? " is-fallback" : ""}`}
-          role="img"
-          aria-label="مدل سه‌بعدی کفش کودک که با اسکرول می‌چرخد"
-        >
-          {shouldLoad && !failed && (
-            <SplineScene
-              className="shoe-spline"
-              scene={SPLINE_SCENE}
-              onLoad={handleSplineLoad}
-              renderOnDemand={false}
-            />
-          )}
-          {failed && <span className="shoe-fallback" aria-hidden="true" />}
-          {!loaded && !failed && <span className="shoe-loading">در حال آماده‌سازی سه‌بعدی…</span>}
-        </div>
-        <div className="shoe-story-copy">
-          <span>برای دویدن، پریدن، کشف کردن</span>
-          <h2 id="shoe-story-title">راحت برای امروز.<br/><em>آماده برای هر بازی.</em></h2>
-          <p>با اسکرول، کفش را از هر زاویه ببین.</p>
-        </div>
-        <div className="shoe-story-finale">
-          <span>انتخاب با تو</span>
-          <strong>کفشی که پا به پات می‌آد.</strong>
-          <Link href="/shop">دیدن کفش‌ها <ArrowLeftIcon /></Link>
-        </div>
-        <div className="shoe-story-bridge" aria-hidden="true">
-          <span>NEXT</span><span>MOVE</span>
-        </div>
-        <span className="shoe-scroll-rail" aria-hidden="true"><i /> SCROLL / SPIN</span>
-        <span className="shoe-story-progress" aria-hidden="true"><i /></span>
-        <small className="shoe-credit">Interactive 3D scene via Spline</small>
+    <section ref={sectionRef} className="dania-playground" aria-labelledby="playground-title">
+      <div className="playground-marquees" aria-hidden="true">
+        <span className="playground-marquee playground-marquee--move">MOVE&nbsp;•&nbsp;MOVE&nbsp;•&nbsp;MOVE&nbsp;•&nbsp;</span>
+        <span className="playground-marquee playground-marquee--play">PLAY&nbsp;•&nbsp;PLAY&nbsp;•&nbsp;PLAY&nbsp;•&nbsp;</span>
       </div>
+
+      <div className="playground-head">
+        <span>DANIA PLAYGROUND / 2026</span>
+        <h2 id="playground-title">Made for every<br /><em>little move.</em></h2>
+        <p>سه ایده برای بازی‌های بزرگ؛ سبک، نرم و آماده‌ی کشف دنیا.</p>
+      </div>
+
+      <div className="playground-shoes" aria-label="طرح‌های مفهومی کفش دانیا">
+        {PLAYGROUND_SHOES.map((shoe, index) => (
+          <article key={shoe.id} className={`playground-shoe playground-shoe--${index === 1 ? "center" : index === 0 ? "side-left" : "side-right"}`}>
+            <div className="playground-concept-index">
+              <span>CONCEPT</span>
+              <b>{String(index + 1).padStart(2, "0")} / 03</b>
+            </div>
+            <div className="playground-shoe-media">
+              <Image
+                src={shoe.image}
+                alt={`طرح مفهومی کفش کودک ${shoe.name}`}
+                fill
+                sizes="(max-width: 700px) 82vw, (max-width: 1100px) 46vw, 42vw"
+                priority={index === 1}
+              />
+            </div>
+            <div className="playground-shoe-meta">
+              <div><strong>{shoe.name}</strong><span>{shoe.tone}</span></div>
+              <ul>{shoe.details.map((detail) => <li key={detail}>{detail}</li>)}</ul>
+            </div>
+          </article>
+        ))}
+      </div>
+
+      <div className="playground-progress" aria-hidden="true"><i /></div>
+      <span className="playground-scroll-note" aria-hidden="true">01&nbsp;&nbsp;—&nbsp;&nbsp;03</span>
     </section>
   );
 }
