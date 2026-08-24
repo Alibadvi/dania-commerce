@@ -81,6 +81,11 @@ export function CatalogPage({
   const [sort, setSort] = useState<SortMode>("featured");
   const [filtersOpen, setFiltersOpen] = useState(false);
 
+  useEffect(() => {
+    const nextCategory = validCategory(initialCategory);
+    setCategory((current) => current === nextCategory ? current : nextCategory);
+  }, [initialCategory]);
+
   const priceBounds = useMemo(() => {
     if (!products.length) return { min: 1_000_000, max: 2_500_000 };
 
