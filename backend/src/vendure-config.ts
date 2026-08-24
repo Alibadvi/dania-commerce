@@ -176,6 +176,6 @@ export const config: VendureConfig = {
     DanyaDashboardPlugin,
     DashboardPlugin.init({ route: "dashboard", appDir: path.join(rootDir, "dist/dashboard") }),
     emailPlugin,
-    ...(isPublicEnvironment ? [HardenPlugin.init({ maxQueryComplexity: 650, apiMode: "prod" })] : []),
+    ...(isPublicEnvironment ? [HardenPlugin.init({ maxQueryComplexity: 1500, apiMode: "prod" })] : []),
   ],
 };
