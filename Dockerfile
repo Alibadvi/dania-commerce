@@ -16,4 +16,4 @@ COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 EXPOSE 10000
 ENV PORT=10000
-CMD ["npm", "run", "start"]
+CMD ["node", "node_modules/vinext/dist/cli.js", "start", "--hostname", "0.0.0.0"]
