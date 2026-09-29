@@ -44,8 +44,10 @@ jobs:
           mkdir -p deploy/dania-backend/import-assets
           cp backend/app.cjs backend/package.json deploy/dania-backend/
           cp -a backend/dist backend/node_modules backend/seed-data deploy/dania-backend/
+          mv deploy/dania-backend/node_modules deploy/dania-backend/runtime-modules
+          ln -s runtime-modules deploy/dania-backend/node_modules
           cp public/images/danya-catalog-grid.png deploy/dania-backend/import-assets/
-          modules=deploy/dania-backend/node_modules
+          modules=deploy/dania-backend/runtime-modules
           rm -rf "$modules/@lingui/cli" "$modules/@lingui/format-po" "$modules/@vendure-io/ui" "$modules/lucide-react" "$modules/typescript" "$modules/shadcn" "$modules/@base-ui" "$modules/@tanstack" "$modules/tsx" "$modules/@ts-morph" "$modules/@tiptap" "$modules/prettier" "$modules/msw" "$modules/@modelcontextprotocol" "$modules/@esbuild" "$modules/@img/sharp-libvips-linuxmusl-x64" "$modules/@img/sharp-wasm32" "$modules/typeorm/browser" "$modules/lightningcss"
           rm -rf "$modules/@vendure/dashboard/node_modules/@esbuild" "$modules/@vendure/dashboard/node_modules/esbuild"
           find "$modules" -type f \( -name '*.map' -o -name '*.d.ts' -o -name '*.d.mts' \) -delete
@@ -83,6 +85,8 @@ jobs:
           exit 1
       - name: Archive lean runtime
         run: |
+          rm deploy/dania-backend/node_modules
+          test -d deploy/dania-backend/runtime-modules
           tar -czf dania-backend-cpanel.tar.gz -C deploy dania-backend
           du -sh deploy/dania-backend dania-backend-cpanel.tar.gz
       - uses: actions/upload-artifact@v4
