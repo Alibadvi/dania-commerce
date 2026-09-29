@@ -17,6 +17,7 @@ const contentSecurityPolicy = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  output: process.env.DANIA_BUILD_TARGET === "node" ? "standalone" : undefined,
 
   async headers() {
     return [
