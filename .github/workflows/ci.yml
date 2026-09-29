@@ -85,7 +85,7 @@ jobs:
           cache-dependency-path: backend/package-lock.json
       - run: npm ci --prefix backend
       - name: Generate initial migration against empty PostgreSQL
-        run: cd backend && npx vendure migrate -g initial-schema
+        run: cd backend && npx tsx scripts/generate-initial-migration.mts
         env:
           DB_HOST: 127.0.0.1
           DB_PORT: "5432"
