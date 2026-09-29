@@ -11,6 +11,8 @@
     "start": "node dist/index.js",
     "start:worker": "node dist/index-worker.js",
     "seed": "tsx src/seed.ts",
+    "seed:deploy": "node dist/seed.js",
+    "migrate:deploy": "node dist/migrate.js",
     "migration:generate": "vendure migrate",
     "migration:run": "vendure migrate run"
   },
