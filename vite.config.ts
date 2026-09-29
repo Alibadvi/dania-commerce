@@ -34,6 +34,13 @@ const localBindingConfig = {
 };
 
 export default defineConfig(async () => {
+  // cPanel runs the Vinext Node server. The normal build targets a Worker.
+  if (process.env.DANIA_BUILD_TARGET === "node") {
+    return {
+      plugins: [vinext()],
+    };
+  }
+
   // Keep Wrangler and Miniflare state project-local. These are non-secret tool
   // settings; application environment belongs in ignored `.env*` files.
   process.env.WRANGLER_WRITE_LOGS ??= "false";
