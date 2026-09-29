@@ -1,0 +1,41 @@
+name: cPanel Vendure package
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend-cpanel.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci --prefix backend --no-audit --no-fund
+      - run: npm run build --prefix backend
+      - run: npm prune --omit=dev --prefix backend --no-audit --no-fund
+      - name: Package cPanel Vendure server and catalog
+        run: |
+          mkdir -p deploy/dania-backend/import-assets
+          cp backend/app.cjs backend/package.json deploy/dania-backend/
+          cp -a backend/dist backend/node_modules backend/seed-data deploy/dania-backend/
+          cp public/images/danya-catalog-grid.png deploy/dania-backend/import-assets/
+          tar -czf dania-backend-cpanel.tar.gz -C deploy dania-backend
+          du -sh deploy/dania-backend deploy/dania-backend/node_modules dania-backend-cpanel.tar.gz
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dania-backend-cpanel
+          path: dania-backend-cpanel.tar.gz
+          if-no-files-found: error
+          retention-days: 7
