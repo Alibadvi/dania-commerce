@@ -15,6 +15,20 @@ jobs:
   package:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: danya
+          POSTGRES_USER: danya
+          POSTGRES_PASSWORD: temporary-ci-only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U danya -d danya"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -25,18 +39,47 @@ jobs:
       - run: npm ci --prefix backend --no-audit --no-fund
       - run: npm run build --prefix backend
       - run: npm prune --omit=dev --prefix backend --no-audit --no-fund
-      - name: Measure backend runtime dependencies
-        run: |
-          du -h -d 2 backend/node_modules | sort -hr | sed -n '1,55p'
-          find backend/node_modules -type f -size +10M -printf '%s %p\\n' | sort -nr | sed -n '1,30p'
-      - name: Package cPanel Vendure server and catalog
+      - name: Assemble lean runtime
         run: |
           mkdir -p deploy/dania-backend/import-assets
           cp backend/app.cjs backend/package.json deploy/dania-backend/
           cp -a backend/dist backend/node_modules backend/seed-data deploy/dania-backend/
           cp public/images/danya-catalog-grid.png deploy/dania-backend/import-assets/
+          modules=deploy/dania-backend/node_modules
+          rm -rf "$modules/@lingui/cli" "$modules/@lingui/format-po" "$modules/@vendure-io/ui" "$modules/lucide-react" "$modules/typescript" "$modules/shadcn" "$modules/@base-ui" "$modules/@tanstack" "$modules/tsx" "$modules/@ts-morph" "$modules/@tiptap" "$modules/prettier" "$modules/msw" "$modules/@modelcontextprotocol" "$modules/@esbuild" "$modules/@img/sharp-libvips-linuxmusl-x64" "$modules/@img/sharp-wasm32" "$modules/typeorm/browser" "$modules/lightningcss"
+          rm -rf "$modules/@vendure/dashboard/node_modules/@esbuild" "$modules/@vendure/dashboard/node_modules/esbuild"
+          find "$modules" -type f \( -name '*.map' -o -name '*.d.ts' -o -name '*.d.mts' \) -delete
+          du -sh deploy/dania-backend
+      - name: Verify migration, catalog, and server from packaged runtime
+        working-directory: deploy/dania-backend
+        env:
+          APP_ENV: local
+          DB_HOST: 127.0.0.1
+          DB_PORT: "5432"
+          DB_NAME: danya
+          DB_USERNAME: danya
+          DB_PASSWORD: temporary-ci-only
+          DB_SYNCHRONIZE: "false"
+          PORT: "3333"
+        run: |
+          node dist/migrate.js
+          node dist/seed.js
+          node app.cjs > "$RUNNER_TEMP/dania-server.log" 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          for attempt in {1..30}; do
+            if curl -fsS -o /dev/null http://127.0.0.1:3333/health && curl -fsS -o /dev/null http://127.0.0.1:3333/dashboard/; then
+              echo "Vendure API and Dashboard are ready"
+              exit 0
+            fi
+            sleep 2
+          done
+          cat "$RUNNER_TEMP/dania-server.log"
+          exit 1
+      - name: Archive lean runtime
+        run: |
           tar -czf dania-backend-cpanel.tar.gz -C deploy dania-backend
-          du -sh deploy/dania-backend deploy/dania-backend/node_modules dania-backend-cpanel.tar.gz
+          du -sh deploy/dania-backend dania-backend-cpanel.tar.gz
       - uses: actions/upload-artifact@v4
         with:
           name: dania-backend-cpanel
