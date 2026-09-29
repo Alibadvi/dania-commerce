@@ -53,7 +53,12 @@ jobs:
       - name: Verify migration, catalog, and server from packaged runtime
         working-directory: deploy/dania-backend
         env:
-          APP_ENV: local
+          APP_ENV: demo
+          APP_ORIGINS: https://daniastore.ir
+          COOKIE_SECRET: ci-only-long-cookie-secret-0123456789
+          SUPERADMIN_PASSWORD: ci-only-long-admin-credential
+          ALLOW_DUMMY_PAYMENTS: "false"
+          RUN_WORKER_IN_PROCESS: "true"
           DB_HOST: 127.0.0.1
           DB_PORT: "5432"
           DB_NAME: danya
