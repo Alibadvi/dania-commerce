@@ -25,6 +25,10 @@ jobs:
       - run: npm ci --prefix backend --no-audit --no-fund
       - run: npm run build --prefix backend
       - run: npm prune --omit=dev --prefix backend --no-audit --no-fund
+      - name: Measure backend runtime dependencies
+        run: |
+          du -h -d 2 backend/node_modules | sort -hr | sed -n '1,55p'
+          find backend/node_modules -type f -size +10M -printf '%s %p\\n' | sort -nr | sed -n '1,30p'
       - name: Package cPanel Vendure server and catalog
         run: |
           mkdir -p deploy/dania-backend/import-assets
