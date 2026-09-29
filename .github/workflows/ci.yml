@@ -45,4 +45,16 @@ jobs:
           NEXT_PUBLIC_SITE_URL: https://daniastore.ir
           VENDURE_SHOP_API_URL: https://api.daniastore.ir/shop-api
           ALLOW_DUMMY_PAYMENTS: "false"
-      - run: test -f dist/server/index.js
+      - run: test -f dist/standalone/server.js
+      - name: Package cPanel storefront
+        run: |
+          mkdir -p deploy/bundle
+          cp -a dist/standalone/. deploy/bundle/
+          cp app.cjs deploy/app.cjs
+          du -sh deploy deploy/bundle/node_modules
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dania-storefront-cpanel
+          path: deploy/
+          if-no-files-found: error
+          retention-days: 7
