@@ -50,11 +50,11 @@ for (const origin of allowedOrigins) {
   const url = new URL(origin);
   if (isPublicEnvironment && url.protocol !== "https:") throw new Error("APP_ORIGINS must contain HTTPS origins in a public environment");
 }
-if (isProduction && (!smtpHost || !smtpUser)) throw new Error("SMTP_HOST and SMTP_USER are required in production");
+if (isProduction && (smtpHost || smtpUser || process.env.SMTP_PASSWORD) && !(smtpHost && smtpUser && process.env.SMTP_PASSWORD)) throw new Error("Provide all SMTP settings or omit them until email is enabled");
 if (isProduction && process.env.DB_SYNCHRONIZE === "true") throw new Error("DB_SYNCHRONIZE must be false in production; run reviewed migrations instead");
 if (isProduction && process.env.ALLOW_DUMMY_PAYMENTS === "true") throw new Error("Dummy payments cannot be enabled in production");
 
-const emailPlugin = isProduction
+const emailPlugin = isProduction && smtpHost && smtpUser && process.env.SMTP_PASSWORD
   ? EmailPlugin.init({
       handlers: defaultEmailHandlers,
       templateLoader: new FileBasedTemplateLoader(path.join(rootDir, "node_modules/@vendure/email-plugin/templates")),
@@ -78,7 +78,7 @@ const emailPlugin = isProduction
         handlers: defaultEmailHandlers,
         templateLoader: new FileBasedTemplateLoader(path.join(rootDir, "node_modules/@vendure/email-plugin/templates")),
         globalTemplateVars: {
-          fromAddress: "Danya Demo <no-reply@localhost>",
+          fromAddress: isProduction ? "Danya <no-reply@daniastore.ir>" : "Danya Demo <no-reply@localhost>",
           verifyEmailAddressUrl: `${storefrontOrigin}/account/verify`,
           passwordResetUrl: `${storefrontOrigin}/account/reset-password`,
           changeEmailAddressUrl: `${storefrontOrigin}/account/verify-email-change`,
