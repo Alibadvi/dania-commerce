@@ -96,7 +96,11 @@ jobs:
           if-no-files-found: error
           retention-days: 7
       - name: Package small update for already installed backends
-        run: tar -czf dania-backend-config-update.tar.gz -C backend/dist vendure-config.js
+        run: |
+          mkdir -p deploy/dania-backend-update/dist
+          cp backend/dist/vendure-config.js deploy/dania-backend-update/dist/
+          cp backend/deploy-cpanel.sh deploy/dania-backend-update/
+          tar -czf dania-backend-config-update.tar.gz -C deploy/dania-backend-update .
       - uses: actions/upload-artifact@v4
         with:
           name: dania-backend-config-update
