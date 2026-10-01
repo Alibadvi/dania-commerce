@@ -52,7 +52,7 @@ jobs:
           cp -a dist/standalone/. deploy/bundle/
           cp app.cjs deploy/app.cjs
           du -sh deploy deploy/bundle/node_modules
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: dania-storefront-cpanel
           path: deploy/

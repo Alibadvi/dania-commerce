@@ -89,7 +89,7 @@ jobs:
           test -d deploy/dania-backend/runtime-modules
           tar -czf dania-backend-cpanel.tar.gz -C deploy dania-backend
           du -sh deploy/dania-backend dania-backend-cpanel.tar.gz
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: dania-backend-cpanel
           path: dania-backend-cpanel.tar.gz
@@ -101,7 +101,7 @@ jobs:
           cp backend/dist/vendure-config.js deploy/dania-backend-update/dist/
           cp backend/deploy-cpanel.sh deploy/dania-backend-update/
           tar -czf dania-backend-config-update.tar.gz -C deploy/dania-backend-update .
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: dania-backend-config-update
           path: dania-backend-config-update.tar.gz
